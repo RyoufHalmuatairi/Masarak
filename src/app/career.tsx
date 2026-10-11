@@ -100,6 +100,17 @@ export default function CareerScreen() {
                     {titles[career.career_id] ?? career.title}
                 </Text>
                 <Text style={styles.english}>{career.title}</Text>
+                <Pressable
+                    accessibilityRole="button"
+                    onPress={() =>
+                        router.push({
+                            pathname: '/roadmap',
+                            params: { id: career.career_id },
+                        })
+                    }
+                >
+                    <Text style={styles.link}>عرض خطوات التعلم المقترحة</Text>
+                </Pressable>
 
                 {(['core', 'additional'] as const).map((priority) => (
                     <View key={priority} style={styles.section}>
