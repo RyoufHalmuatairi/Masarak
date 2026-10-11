@@ -152,6 +152,9 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.brand}>مسارك</Text>
+        <Pressable accessibilityRole="button" style={styles.button} onPress={() => router.push('/learning-plan')}>
+          <Text style={styles.buttonText}>خطة تعلمي</Text>
+        </Pressable>
         <Text style={styles.description}>
           اكتشف المسارات المرتبطة بمهاراتك
         </Text>

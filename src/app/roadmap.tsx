@@ -11,46 +11,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import dataset from '../masarak_dataset.json';
-const learningSteps: Record<string, string[]> = {
-    Programming: [
-        'راجع المتغيرات والشروط والحلقات والدوال في Python.',
-        'اكتب برنامجًا يقرأ ملف بيانات ويحسب ملخصًا له، وتعامل مع القيم الناقصة.',
-        'احتفظ بالكود واختباراتك، واشرح طريقة عمله وما يحتاج إلى تحسين.',
-    ],
-    'Machine Learning (ML)': [
-        'تعرّف على التعلم تحت الإشراف، والفرق بين بيانات التدريب والاختبار.',
-        'درّب نموذجًا بسيطًا على بيانات تدريب، ثم قيّمه على بيانات اختبار منفصلة وقارنه بتوقع بسيط.',
-        'وثّق النتائج والأخطاء، واشرح لماذا اخترت طريقة التقييم.',
-    ],
-    'Model lifecycles deployment management': [
-        'راجع مراحل تدريب النموذج وحفظه ونشره ومراقبته.',
-        'احفظ نموذجًا مدربًا، ثم أنشئ طريقة لاستقبال بيانات جديدة وإرجاع توقعاته.',
-        'وثّق إصدار النموذج، وكيف تتحقق من المدخلات وتراقب الأخطاء بعد تشغيله.',
-    ],
-    'Artificial intelligence, machine learning and deep learning application': [
-        'اختر مشكلة صغيرة، وحدد هل تحتاج إلى تعلم آلة أم يكفي حل برمجي بسيط.',
-        'ابنِ تجربة لحل المشكلة، وقارن نتيجتها بطريقة بسيطة تؤدي نفس المهمة.',
-        'وثّق الفائدة وحدود التجربة، والحالات التي قد تعطي فيها نتائج خاطئة.',
-    ],
-    'Data preparation': [
-        'راجع القيم الناقصة والتكرار وأنواع البيانات، وكيف تؤثر في التحليل.',
-        'نظّف نسخة من ملف بيانات، وسجّل التغييرات وأسبابها دون تعديل الملف الأصلي.',
-        'جهّز بيانات التدريب والاختبار بصورة منفصلة، ووثّق خطوات التحضير لتتمكن من تكرارها.',
-    ],
-    'Knowledge of prediction models': [
-        'تعرّف على الفرق بين توقع رقم وتصنيف فئة، ومتى يناسب كل منهما المشكلة.',
-        'قارن نموذجين بسيطين باستخدام نفس بيانات التدريب والاختبار ومقياس تقييم مناسب.',
-        'اشرح أيهما أنسب بناءً على النتائج، واذكر حدود التوقعات.',
-    ],
-};
+import { getLearningSteps } from '../constants/learning-steps';
+import { useLearningPlan } from '../hooks/use-learning-plan';
 
-const generalSteps = [
-    'راجع مفهوم المهارة وحدد ما تحتاج إلى تعلمه.',
-    'اختر مادة تعليمية مناسبة، وطبّق تمرينًا مرتبطًا بالمهارة.',
-    'احتفظ بتطبيقك واشرح نتائجك وما يحتاج إلى تحسين.',
-];
 export default function RoadmapScreen() {
     const router = useRouter();
+    const learning = useLearningPlan();
     const { id } = useLocalSearchParams<{ id?: string }>();
 
     const [savedSkills, setSavedSkills] = useState<string[] | null>(null);
@@ -114,6 +80,14 @@ export default function RoadmapScreen() {
                     <Text style={styles.link}>العودة</Text>
                 </Pressable>
 
+                <Pressable accessibilityRole="button" onPress={() => router.push('/learning-plan')}>
+                    <Text style={styles.link}>خطة تعلمي</Text>
+                </Pressable>
+                {learning.error ? (
+                    <Pressable accessibilityRole="button" onPress={() => void learning.reload()}>
+                        <Text style={styles.note}>{learning.error} اضغط لإعادة التحميل.</Text>
+                    </Pressable>
+                ) : null}
                 <Text style={styles.title}>خطوات التعلم المقترحة</Text>
                 <Text style={styles.english}>
                     {career?.title ?? ''}
@@ -166,12 +140,23 @@ export default function RoadmapScreen() {
                                             {skill?.description ?? 'الوصف غير متوفر'}
                                         </Text>
 
-                                        {(learningSteps[item.name] ?? generalSteps).map((step, stepIndex) => (
+                                        {getLearningSteps(item.name).map((step, stepIndex) => (
                                             <Text key={stepIndex} style={styles.text}>
                                                 {stepIndex + 1}. {step}
                                             </Text>
                                         ))}
 
+                                        <Pressable
+                                            accessibilityRole="button"
+                                            accessibilityState={{ disabled: !learning.ready || learning.busy }}
+                                            disabled={!learning.ready || learning.busy}
+                                            style={{ backgroundColor: '#ACD8BB', borderRadius: 14, padding: 14, minHeight: 48, opacity: !learning.ready || learning.busy ? 0.5 : 1 }}
+                                            onPress={() => void learning.change(item.skill_id, !learning.plan.includes(item.skill_id))}
+                                        >
+                                            <Text style={{ color: '#0D1B16', textAlign: 'center', fontWeight: '600', fontSize: 16 }}>
+                                                {!learning.ready ? 'جارٍ تحميل الخطة…' : learning.plan.includes(item.skill_id) ? '✓ في خطة تعلمي — إزالة' : 'أضف إلى خطة تعلمي'}
+                                            </Text>
+                                        </Pressable>
                                         <Text style={styles.note}>
                                             بعد التطبيق، راجع ما تستطيع تنفيذه وشرحه بنفسك قبل تحديث ملف مهاراتك.
                                         </Text>
