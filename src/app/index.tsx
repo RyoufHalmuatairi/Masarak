@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 import {
   Pressable,
   ScrollView,
@@ -29,83 +30,84 @@ const skills = dataset.skills.filter((skill) =>
 );
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState<string[] | null>(null);
   const [search, setSearch] = useState('');
   const [storageReady, setStorageReady] = useState(false);
-const [storageError, setStorageError] = useState('');
+  const [storageError, setStorageError] = useState('');
 
-useEffect(() => {
-  let active = true;
+  useEffect(() => {
+    let active = true;
 
-  async function restoreProfile() {
-    try {
-      const saved = await AsyncStorage.getItem('masarak-skills-v1');
+    async function restoreProfile() {
+      try {
+        const saved = await AsyncStorage.getItem('masarak-skills-v1');
 
-      if (saved !== null) {
-        const parsed: unknown = JSON.parse(saved);
+        if (saved !== null) {
+          const parsed: unknown = JSON.parse(saved);
 
-        if (
-          !Array.isArray(parsed) ||
-          !parsed.every((id) => typeof id === 'string')
-        ) {
-          throw new Error('Invalid saved profile');
+          if (
+            !Array.isArray(parsed) ||
+            !parsed.every((id) => typeof id === 'string')
+          ) {
+            throw new Error('Invalid saved profile');
+          }
+
+          const validIds = new Set(skills.map((skill) => skill.skill_id));
+          const restored = [...new Set(
+            parsed.filter((id) => validIds.has(id))
+          )];
+
+          if (active) {
+            setSelected(restored);
+            setSubmitted(restored);
+          }
         }
-
-        const validIds = new Set(skills.map((skill) => skill.skill_id));
-        const restored = [...new Set(
-          parsed.filter((id) => validIds.has(id))
-        )];
-
+      } catch {
         if (active) {
-          setSelected(restored);
-          setSubmitted(restored);
+          setStorageError('تعذر استرجاع المهارات المحفوظة.');
         }
+      } finally {
+        if (active) setStorageReady(true);
       }
-    } catch {
-      if (active) {
-        setStorageError('تعذر استرجاع المهارات المحفوظة.');
-      }
-    } finally {
-      if (active) setStorageReady(true);
     }
+
+    restoreProfile();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function saveProfile() {
+    const profile = [...new Set(selected)];
+
+    try {
+      await AsyncStorage.setItem(
+        'masarak-skills-v1',
+        JSON.stringify(profile)
+      );
+      setStorageError('');
+    } catch {
+      setStorageError(
+        'ظهرت النتائج، لكن تعذر حفظ المهارات على الجهاز.'
+      );
+    }
+
+    setSubmitted(profile);
+    setEditing(false);
+    setSearch('');
   }
 
-  restoreProfile();
-
-  return () => {
-    active = false;
-  };
-}, []);
-
-async function saveProfile() {
-  const profile = [...new Set(selected)];
-
-  try {
-    await AsyncStorage.setItem(
-      'masarak-skills-v1',
-      JSON.stringify(profile)
-    );
-    setStorageError('');
-  } catch {
-    setStorageError(
-      'ظهرت النتائج، لكن تعذر حفظ المهارات على الجهاز.'
+  if (!storageReady) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <Text style={styles.description}>جارٍ تحميل مهاراتك…</Text>
+      </SafeAreaView>
     );
   }
-
-  setSubmitted(profile);
-  setEditing(false);
-  setSearch('');
-}
-
-if (!storageReady) {
-  return (
-    <SafeAreaView style={styles.screen}>
-      <Text style={styles.description}>جارٍ تحميل مهاراتك…</Text>
-    </SafeAreaView>
-  );
-}
 
   const visibleSkills = skills.filter((skill) =>
     skill.name.toLowerCase().includes(search.trim().toLowerCase())
@@ -251,6 +253,19 @@ if (!storageReady) {
                 </Text>
                 <Text style={styles.english}>{career.title}</Text>
                 <Text style={styles.score}>{career.score}%</Text>
+                <Pressable
+                  style={styles.button}
+                  accessibilityRole="button"
+                  onPress={() =>
+                    router.push({
+                      pathname: '/career',
+                      params: { id: career.career_id },
+                    })
+                  }
+                >
+                  <Text style={styles.buttonText}>تفاصيل الوظيفة</Text>
+                </Pressable>
+
                 <Text style={styles.description}>
                   تغطية المهارات الأساسية: {career.matched} من {career.total}
                 </Text>
