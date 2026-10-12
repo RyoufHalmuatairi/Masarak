@@ -8,8 +8,7 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSkillProfile } from '../hooks/use-skill-profile';
 import dataset from '../masarak_dataset.json';
 
 const titles: Record<string, string> = {
@@ -23,44 +22,9 @@ const titles: Record<string, string> = {
 
 export default function CareerScreen() {
     const router = useRouter();
-    const [savedSkills, setSavedSkills] = useState<string[] | null>(null);
-    const [profileLoaded, setProfileLoaded] = useState(false);
-    const [profileError, setProfileError] = useState('');
-
-    useEffect(() => {
-        let active = true;
-
-        async function loadProfile() {
-            try {
-                const saved = await AsyncStorage.getItem('masarak-skills-v1');
-
-                if (saved !== null) {
-                    const parsed: unknown = JSON.parse(saved);
-
-                    if (
-                        !Array.isArray(parsed) ||
-                        !parsed.every((id) => typeof id === 'string')
-                    ) {
-                        throw new Error('Invalid profile');
-                    }
-
-                    if (active) setSavedSkills([...new Set(parsed)]);
-                }
-            } catch {
-                if (active) {
-                    setProfileError('تعذر قراءة ملف مهاراتك.');
-                }
-            } finally {
-                if (active) setProfileLoaded(true);
-            }
-        }
-
-        loadProfile();
-
-        return () => {
-            active = false;
-        };
-    }, []);
+    const { profile, ready: profileLoaded, error: profileError } = useSkillProfile();
+    const savedSkills = profile?.skill_ids ?? null;
+    const cvSkills = new Set(profile?.cv?.skills.flatMap(skill => skill.mapped_skill_id && !profile.excluded_cv_skill_ids.includes(skill.mapped_skill_id) ? [skill.mapped_skill_id] : []) ?? []);
     const params = useLocalSearchParams<{ id?: string }>();
     const career = dataset.careers.find(
         (item) => item.career_id === params.id
@@ -71,7 +35,7 @@ export default function CareerScreen() {
             <SafeAreaView style={styles.screen}>
                 <View style={styles.content}>
                     <Text style={styles.title}>لم يتم العثور على الوظيفة</Text>
-                    <Pressable onPress={() => router.replace('/')}>
+                    <Pressable onPress={() => router.replace('/home')}>
                         <Text style={styles.link}>العودة للرئيسية</Text>
                     </Pressable>
                 </View>
@@ -90,7 +54,7 @@ export default function CareerScreen() {
                     accessibilityRole="button"
                     onPress={() => {
                         if (router.canGoBack()) router.back();
-                        else router.replace('/');
+                        else router.replace('/home');
                     }}
                 >
                     <Text style={styles.link}>العودة</Text>
@@ -136,9 +100,9 @@ export default function CareerScreen() {
                                                 : profileError
                                                     ? profileError
                                                     : savedSkills === null
-                                                        ? 'أضف مهاراتك من الصفحة الرئيسية لتحديد المطابقة'
+                                                        ? 'اعتمد سيرتك أو أضف مهاراتك من ملفك'
                                                         : savedSkills.includes(item.skill_id)
-                                                            ? '✓ ضمن مهاراتك حسب اختيارك'
+                                                            ? cvSkills.has(item.skill_id) ? '✓ من سيرتك الذاتية المعتمدة' : '✓ أضفتها يدويًا في ملفك'
                                                             : 'لم تحددها في ملف مهاراتك'}
                                         </Text>
 
@@ -180,7 +144,7 @@ export default function CareerScreen() {
 }
 
 const styles = StyleSheet.create({
-    screen: { flex: 1, backgroundColor: '#0D1B16' },
+    screen: { flex: 1, backgroundColor: '#F8F9F5' },
     content: {
         width: '100%',
         maxWidth: 650,
@@ -190,42 +154,42 @@ const styles = StyleSheet.create({
         paddingBottom: 60,
     },
     title: {
-        color: '#ACD8BB',
+        color: '#12635E',
         fontSize: 28,
         fontWeight: '700',
         textAlign: 'right',
     },
     heading: {
-        color: '#FFFFFF',
+        color: '#193C3B',
         fontSize: 21,
         fontWeight: '700',
         textAlign: 'right',
     },
     section: { gap: 14 },
     card: {
-        backgroundColor: '#1A3025',
+        backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#DDE6E0',
         padding: 20,
         borderRadius: 16,
         gap: 12,
     },
     skillName: {
-        color: '#FFFFFF',
+        color: '#193C3B',
         fontSize: 18,
         fontWeight: '600',
     },
     english: {
-        color: '#D2DED5',
+        color: '#617570',
         fontSize: 15,
         lineHeight: 25,
     },
     link: {
-        color: '#ACD8BB',
+        color: '#12635E',
         fontSize: 17,
         textAlign: 'right',
         paddingVertical: 8,
     },
     note: {
-        color: '#D2DED5',
+        color: '#617570',
         fontSize: 15,
         lineHeight: 27,
         textAlign: 'right',

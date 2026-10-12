@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSkillProfile } from '../hooks/use-skill-profile';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
     Pressable,
@@ -19,42 +18,8 @@ export default function RoadmapScreen() {
     const learning = useLearningPlan();
     const { id } = useLocalSearchParams<{ id?: string }>();
 
-    const [savedSkills, setSavedSkills] = useState<string[] | null>(null);
-    const [loaded, setLoaded] = useState(false);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        let active = true;
-
-        async function loadSkills() {
-            try {
-                const saved = await AsyncStorage.getItem('masarak-skills-v1');
-
-                if (saved !== null) {
-                    const parsed: unknown = JSON.parse(saved);
-
-                    if (
-                        !Array.isArray(parsed) ||
-                        !parsed.every((value) => typeof value === 'string')
-                    ) {
-                        throw new Error('Invalid profile');
-                    }
-
-                    if (active) setSavedSkills([...new Set(parsed)]);
-                }
-            } catch {
-                if (active) setError('تعذر قراءة مهاراتك. حاول فتح الصفحة مجددًا.');
-            } finally {
-                if (active) setLoaded(true);
-            }
-        }
-
-        loadSkills();
-
-        return () => {
-            active = false;
-        };
-    }, []);
+    const { profile, ready: loaded, error } = useSkillProfile();
+    const savedSkills = profile?.skill_ids ?? null;
 
     const career = dataset.careers.find(
         (item) => item.career_id === id
@@ -74,7 +39,7 @@ export default function RoadmapScreen() {
                     accessibilityRole="button"
                     onPress={() => {
                         if (router.canGoBack()) router.back();
-                        else router.replace('/');
+                        else router.replace('/home');
                     }}
                 >
                     <Text style={styles.link}>العودة</Text>
@@ -102,16 +67,16 @@ export default function RoadmapScreen() {
                 ) : savedSkills === null ? (
                     <View style={styles.card}>
                         <Text style={styles.text}>
-                            أضف مهاراتك أولًا حتى نعرض قائمة مناسبة لاختياراتك.
+                            اعتمد مهارات سيرتك أو أضفها يدويًا حتى نعرض اقتراحات مرتبطة بملفك.
                         </Text>
-                        <Pressable onPress={() => router.replace('/')}>
+                        <Pressable onPress={() => router.replace('/home')}>
                             <Text style={styles.link}>فتح الصفحة الرئيسية</Text>
                         </Pressable>
                     </View>
                 ) : (
                     <>
                         <Text style={styles.text}>
-                            هذه المهارات الأساسية لم تحددها في ملفك. اختر منها ما
+                            هذه المهارات الأساسية لم يُرصد دليل عليها في ملفك المعتمد. اختر منها ما
                             تريد تطويره. ترتيب القائمة ليس ترتيب أولوية أو متطلبات
                             سابقة للتعلم.
                         </Text>
@@ -150,10 +115,10 @@ export default function RoadmapScreen() {
                                             accessibilityRole="button"
                                             accessibilityState={{ disabled: !learning.ready || learning.busy }}
                                             disabled={!learning.ready || learning.busy}
-                                            style={{ backgroundColor: '#ACD8BB', borderRadius: 14, padding: 14, minHeight: 48, opacity: !learning.ready || learning.busy ? 0.5 : 1 }}
+                                            style={{ backgroundColor: '#12635E', borderRadius: 14, padding: 14, minHeight: 48, opacity: !learning.ready || learning.busy ? 0.5 : 1 }}
                                             onPress={() => void learning.change(item.skill_id, !learning.plan.includes(item.skill_id))}
                                         >
-                                            <Text style={{ color: '#0D1B16', textAlign: 'center', fontWeight: '600', fontSize: 16 }}>
+                                            <Text style={{ color: '#FFFFFF', textAlign: 'center', fontWeight: '600', fontSize: 16 }}>
                                                 {!learning.ready ? 'جارٍ تحميل الخطة…' : learning.plan.includes(item.skill_id) ? '✓ في خطة تعلمي — إزالة' : 'أضف إلى خطة تعلمي'}
                                             </Text>
                                         </Pressable>
@@ -178,7 +143,7 @@ export default function RoadmapScreen() {
 }
 
 const styles = StyleSheet.create({
-    screen: { flex: 1, backgroundColor: '#0D1B16' },
+    screen: { flex: 1, backgroundColor: '#F8F9F5' },
     content: {
         width: '100%',
         maxWidth: 650,
@@ -188,46 +153,46 @@ const styles = StyleSheet.create({
         gap: 20,
     },
     title: {
-        color: '#ACD8BB',
+        color: '#12635E',
         fontSize: 28,
         fontWeight: '700',
         textAlign: 'right',
     },
     heading: {
-        color: '#ACD8BB',
+        color: '#12635E',
         fontSize: 18,
         textAlign: 'right',
     },
     card: {
-        backgroundColor: '#1A3025',
+        backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#DDE6E0',
         padding: 22,
         borderRadius: 18,
         gap: 14,
     },
     skill: {
-        color: '#FFFFFF',
+        color: '#193C3B',
         fontSize: 20,
         fontWeight: '600',
     },
     english: {
-        color: '#D2DED5',
+        color: '#617570',
         fontSize: 15,
         lineHeight: 25,
     },
     text: {
-        color: '#E0EBE3',
+        color: '#425F57',
         fontSize: 16,
         lineHeight: 28,
         textAlign: 'right',
     },
     link: {
-        color: '#ACD8BB',
+        color: '#12635E',
         fontSize: 17,
         paddingVertical: 10,
         textAlign: 'right',
     },
     note: {
-        color: '#B0C3B7',
+        color: '#617570',
         fontSize: 14,
         lineHeight: 24,
         textAlign: 'right',

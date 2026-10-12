@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage, { captureDataScope } from './scoped-storage';
 import dataset from '../masarak_dataset.json';
 
 const key = 'masarak-learning-plan-v1';
@@ -16,11 +16,14 @@ export async function readLearningPlan(): Promise<string[]> {
 }
 
 export function changeLearningPlan(id: string, add: boolean): Promise<string[]> {
+  const scope = captureDataScope();
   const operation = pending.then(async () => {
+    scope.assertCurrent();
     if (!validIds.has(id)) throw new Error('Unknown skill');
     const current = await readLearningPlan();
     const next = add ? [...new Set([...current, id])] : current.filter((entry) => entry !== id);
     await AsyncStorage.setItem(key, JSON.stringify(next));
+    scope.assertCurrent();
     return next;
   });
   pending = operation.catch(() => undefined);
