@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSkillProfile } from '../hooks/use-skill-profile';
 import dataset from '../masarak_dataset.json';
+import { getSkillGapReport, readinessLabels } from '../utils/skill-gap';
 
 const titles: Record<string, string> = {
     C01: 'مهندس برمجيات',
@@ -46,6 +47,8 @@ export default function CareerScreen() {
     const requirements = dataset.career_skills.filter(
         (item) => item.career_id === career.career_id
     );
+    // An empty skill list means no saved skills, same as the home screen.
+    const gap = getSkillGapReport(career.career_id, savedSkills?.length ? savedSkills : null);
 
     return (
         <SafeAreaView style={styles.screen}>
@@ -75,6 +78,38 @@ export default function CareerScreen() {
                 >
                     <Text style={styles.link}>عرض خطوات التعلم المقترحة</Text>
                 </Pressable>
+
+                <View style={styles.card}>
+                    <Text style={styles.heading}>جاهزيتك لهذه الوظيفة</Text>
+
+                    {gap.score === null || gap.level === null ? (
+                        <Text style={styles.note}>
+                            اعتمد سيرتك أو أضف مهاراتك من ملفك لنحسب جاهزيتك
+                        </Text>
+                    ) : (
+                        <>
+                            <Text style={styles.title}>{gap.score}%</Text>
+                            <Text style={styles.skillName}>
+                                {readinessLabels[gap.level]}
+                            </Text>
+                            <Text style={styles.note}>
+                                تملك {gap.matchedCore.length} من{' '}
+                                {gap.matchedCore.length + gap.missingCore.length} مهارة أساسية
+                            </Text>
+
+                            {gap.missingCore.length > 0 && (
+                                <>
+                                    <Text style={styles.skillName}>مهارات أساسية ناقصة</Text>
+                                    {gap.missingCore.map((skill) => (
+                                        <Text key={skill.skill_id} style={styles.note}>
+                                            • {skill.name}
+                                        </Text>
+                                    ))}
+                                </>
+                            )}
+                        </>
+                    )}
+                </View>
 
                 {(['core', 'additional'] as const).map((priority) => (
                     <View key={priority} style={styles.section}>
