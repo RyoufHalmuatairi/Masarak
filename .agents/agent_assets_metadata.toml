@@ -2,20 +2,6 @@ uploads = []
 generated = []
 
 [[outputs]]
-id = "mWaggTxWvk8j7dD9RxAKp"
-uri = "file://reports/masarak-project-status.html"
-type = "html"
-title = "تقرير حالة مشروع مسارك وملاحظات الأمان"
-description = "مقارنة موجزة بين التقرير الأكاديمي والنسخة البرمجية الحالية: المنجز، المتبقي، وأولويات حماية البيانات قبل استخدام سير حقيقية أو النشر."
-logical_id = "0d872228-1249-4664-a69f-dce64b4bd3dd"
-content_hash = "sha256:5f510eb5078d51354d6b71ba819fb5968e0a8f0418bd73320e1e6bf2f495fb17"
-size = 16104
-mtime_ms = 1791994792918
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:7026c07b-53e3-497d-affa-b6aac928fb2c/0d872228-1249-4664-a69f-dce64b4bd3dd/819c8027-5e0c-40b5-9920-b86b9f8d3ca3"
-storage_version_token = "1791994818519736"
-content_type = "text/html"
-
-[[outputs]]
 id = "UjKZLKrwCfMBdnP_neT_g"
 uri = "file://reports/masarak-project-status.pdf"
 type = "pdf"
