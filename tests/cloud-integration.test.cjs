@@ -32,6 +32,7 @@ function harness() {
       if (name.includes('async-storage')) return storage;
       if (name.endsWith('masarak_dataset.json')) return dataset;
       if (name === '../constants/learning-resources') return { learningResourceIds: new Set(['github-skills-introduction']) };
+      if (name === '../constants/professional-certifications') return { professionalCertificationIds: new Set(['github-foundations']) };
       if (name === 'expo-file-system') return { Directory, File, Paths: { document: 'documents', cache: 'cache' } };
       if (name === 'react-native-url-polyfill/auto') return {};
       if (name === './auth-storage') return { authStorage: {} };
@@ -74,9 +75,18 @@ test('learning progress accepts valid completion dates and old snapshots remain 
   const types = h.load('cloud-types.ts');
   const old = types.parseCloudSnapshot(clone(emptySnapshot), 'A');
   assert.deepEqual(clone(old.learningProgress), {});
+  assert.deepEqual(clone(old.professionalCertifications), []);
   const updated = types.parseCloudSnapshot({ ...clone(emptySnapshot), learningProgress: { 'github-skills-introduction': '2026-10-14T10:00:00.000Z' } }, 'A');
   assert.equal(updated.learningProgress['github-skills-introduction'], '2026-10-14T10:00:00.000Z');
   assert.throws(() => types.parseCloudSnapshot({ ...clone(emptySnapshot), learningProgress: { course: 'not-a-date' } }, 'A'));
+});
+
+test('cloud snapshots preserve selected professional certifications safely', () => {
+  const h = harness();
+  const types = h.load('cloud-types.ts');
+  const value = types.parseCloudSnapshot({ ...clone(emptySnapshot), professionalCertifications: ['github-foundations'] }, 'A');
+  assert.deepEqual(clone(value.professionalCertifications), ['github-foundations']);
+  assert.throws(() => types.parseCloudSnapshot({ ...clone(emptySnapshot), professionalCertifications: 'github-foundations' }, 'A'));
 });
 test('a fresh device restores the existing account snapshot and its baseline', async () => {
   const f = engineFixture({ remote: remote(3) });

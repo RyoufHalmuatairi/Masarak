@@ -4,10 +4,11 @@ import dataset from '../masarak_dataset.json';
 export type PersonalProfile = {
   version: 1; name: string; major: string; institution: string;
   education: string; studyStatus: string; studyDates: string;
+  gpa: number | null; gpaScale: 4 | 5 | null;
   interests: string[]; traits: string[]; careerGoal: string | null;
 };
 export const PERSONAL_PROFILE_KEY = 'masarak-personal-profile-v1';
-export const emptyPersonalProfile = (): PersonalProfile => ({ version: 1, name: '', major: '', institution: '', education: '', studyStatus: '', studyDates: '', interests: [], traits: [], careerGoal: null });
+export const emptyPersonalProfile = (): PersonalProfile => ({ version: 1, name: '', major: '', institution: '', education: '', studyStatus: '', studyDates: '', gpa: null, gpaScale: null, interests: [], traits: [], careerGoal: null });
 export function parsePersonalProfile(value: unknown): PersonalProfile {
   if (!value || typeof value !== 'object') throw new Error('Invalid personal profile');
   const v = value as Record<string, unknown>;
@@ -19,7 +20,10 @@ export function parsePersonalProfile(value: unknown): PersonalProfile {
     return [...new Set(values.map(item => item.trim()).filter(Boolean))];
   };
   if (v.careerGoal !== null && (typeof v.careerGoal !== 'string' || !dataset.careers.some(career => career.career_id === v.careerGoal))) throw new Error('Invalid career goal');
-  return { version: 1, ...Object.fromEntries(fields.map(field => [field, (v[field] as string).trim()])), interests: list('interests'), traits: list('traits'), careerGoal: v.careerGoal } as PersonalProfile;
+  const gpaScale = v.gpaScale === 4 || v.gpaScale === 5 ? v.gpaScale : null;
+  const gpa = typeof v.gpa === 'number' && Number.isFinite(v.gpa) && gpaScale !== null && v.gpa >= 0 && v.gpa <= gpaScale ? v.gpa : null;
+  if ((v.gpa !== undefined && v.gpa !== null && gpa === null) || (v.gpaScale !== undefined && v.gpaScale !== null && gpaScale === null)) throw new Error('Invalid GPA');
+  return { version: 1, ...Object.fromEntries(fields.map(field => [field, (v[field] as string).trim()])), gpa, gpaScale, interests: list('interests'), traits: list('traits'), careerGoal: v.careerGoal } as PersonalProfile;
 }
 export async function readPersonalProfile(): Promise<PersonalProfile | null> {
   const raw = await AsyncStorage.getItem(PERSONAL_PROFILE_KEY);

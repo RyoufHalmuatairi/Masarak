@@ -5,7 +5,7 @@ import { validateCvFile } from './cv-file';
 import dataset from '../masarak_dataset.json';
 
 export type CloudCv = { path: string; name: string; size: number; mimeType: string; review: CvReview | null };
-export type CloudSnapshot = { version: 1; personal: PersonalProfile | null; skills: SkillProfile | null; plan: string[]; learningProgress: Record<string, string>; cv: CloudCv | null };
+export type CloudSnapshot = { version: 1; personal: PersonalProfile | null; skills: SkillProfile | null; plan: string[]; learningProgress: Record<string, string>; professionalCertifications: string[]; cv: CloudCv | null };
 export type CloudRecord = { revision: number; snapshot: CloudSnapshot; updated_at: string };
 export type CloudMeta = { version: 1; enabled: boolean; paused: boolean; dirty: boolean; localVersion: number; baseRevision: number | null; lastSynced: string | null; lastLocalState: string | null; fileBinding: { identity: string; path: string } | null };
 export const CLOUD_META_KEY = 'masarak-cloud-sync-v1';
@@ -24,13 +24,16 @@ export function parseCloudSnapshot(value: unknown, owner: string): CloudSnapshot
     if (id.length > 100 || typeof completedAt !== 'string' || completedAt.length > 40 || Number.isNaN(Date.parse(completedAt))) throw new Error('Invalid learning progress');
     learningProgress[id] = completedAt;
   }
+  const rawCertifications = (v as CloudSnapshot & { professionalCertifications?: unknown }).professionalCertifications;
+  if (rawCertifications !== undefined && (!Array.isArray(rawCertifications) || rawCertifications.length > 50 || rawCertifications.some(id => typeof id !== 'string' || id.length > 100))) throw new Error('Invalid professional certifications');
+  const professionalCertifications = [...new Set((rawCertifications ?? []) as string[])];
   const ids = new Set(dataset.career_skills.map(row => row.skill_id));
   let cv: CloudCv | null = null;
   if (v.cv !== null) {
     if (!v.cv || typeof v.cv.path !== 'string' || !validCloudPath(v.cv.path, owner) || typeof v.cv.name !== 'string' || v.cv.name.length > 250 || typeof v.cv.mimeType !== 'string' || typeof v.cv.size !== 'number' || !Number.isFinite(v.cv.size) || v.cv.size < 1 || validateCvFile(v.cv) || (v.cv.review !== null && !validReview(v.cv.review))) throw new Error('Invalid cloud CV');
     cv = { path: v.cv.path, name: v.cv.name, size: v.cv.size, mimeType: v.cv.mimeType, review: v.cv.review };
   }
-  return { version: 1, personal: v.personal === null ? null : parsePersonalProfile(v.personal), skills: v.skills === null ? null : parseSkillProfile(v.skills), plan: [...new Set(v.plan.filter(id => ids.has(id)))], learningProgress, cv };
+  return { version: 1, personal: v.personal === null ? null : parsePersonalProfile(v.personal), skills: v.skills === null ? null : parseSkillProfile(v.skills), plan: [...new Set(v.plan.filter(id => ids.has(id)))], learningProgress, professionalCertifications, cv };
 }
 export function parseCloudMeta(raw: string | null): CloudMeta {
   if (raw === null) return defaultCloudMeta();

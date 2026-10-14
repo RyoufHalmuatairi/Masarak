@@ -9,9 +9,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSkillProfile } from '../hooks/use-skill-profile';
+import { usePersonalProfile } from '../hooks/use-personal-profile';
+import { useLearningProgress } from '../hooks/use-learning-progress';
+import { useProfessionalCertifications } from '../hooks/use-professional-certifications';
 import dataset from '../masarak_dataset.json';
-import { getSkillGapReport, readinessLabels } from '../utils/skill-gap';
+import { getSkillGapReport, readinessLabels, readinessLevel } from '../utils/skill-gap';
 import { careerProfiles } from '../constants/career-profiles';
+import { certificationsForCareer } from '../constants/professional-certifications';
+import { calculateCareerReadiness } from '../utils/career-readiness';
 
 const titles: Record<string, string> = {
     C01: 'مهندس برمجيات',
@@ -25,6 +30,9 @@ const titles: Record<string, string> = {
 export default function CareerScreen() {
     const router = useRouter();
     const { profile, ready: profileLoaded, error: profileError } = useSkillProfile();
+    const personalState = usePersonalProfile();
+    const learningProgress = useLearningProgress();
+    const certificationState = useProfessionalCertifications();
     const savedSkills = profile?.skill_ids ?? null;
     const cvSkills = new Set(profile?.cv?.skills.flatMap(skill => skill.mapped_skill_id && !profile.excluded_cv_skill_ids.includes(skill.mapped_skill_id) ? [skill.mapped_skill_id] : []) ?? []);
     const params = useLocalSearchParams<{ id?: string }>();
@@ -49,8 +57,17 @@ export default function CareerScreen() {
         (item) => item.career_id === career.career_id
     );
     const roleProfile = careerProfiles[career.career_id];
+    const roleCertifications = certificationsForCareer(career.career_id);
     // An empty skill list means no saved skills, same as the home screen.
     const gap = getSkillGapReport(career.career_id, savedSkills?.length ? savedSkills : null);
+    const readiness = calculateCareerReadiness(career.career_id, {
+        skillProfile: profile,
+        personal: personalState.personal,
+        learningProgress: learningProgress.progress,
+        professionalCertifications: certificationState.achieved,
+    });
+    const readinessLoaded = profileLoaded && personalState.ready && learningProgress.ready && certificationState.ready;
+    const level = readinessLevel(readiness.score);
 
     return (
         <SafeAreaView style={styles.screen}>
@@ -82,22 +99,28 @@ export default function CareerScreen() {
                 </Pressable>
 
                 <View style={styles.card}>
-                    <Text style={styles.heading}>جاهزيتك المبدئية وفق تغطية المهارات</Text>
+                    <Text style={styles.heading}>جاهزيتك المركبة لهذا المسار</Text>
 
-                    {gap.score === null || gap.level === null ? (
+                    {!readinessLoaded ? (
+                        <Text style={styles.note}>جارٍ جمع أدلة ملفك…</Text>
+                    ) : readiness.score === null || level === null ? (
                         <Text style={styles.note}>
-                            اعتمد سيرتك أو أضف مهاراتك من ملفك لنحسب جاهزيتك
+                            أضف بياناتك أو اعتمد سيرتك لنحسب الجاهزية
                         </Text>
                     ) : (
                         <>
-                            <Text style={styles.title}>{gap.score}%</Text>
+                            <Text style={styles.title}>{readiness.score}%</Text>
                             <Text style={styles.skillName}>
-                                {readinessLabels[gap.level]}
+                                {readinessLabels[level]}
                             </Text>
-                            <Text style={styles.note}>
-                                وثّقت {gap.matchedCore.length} من{' '}
-                                {gap.matchedCore.length + gap.missingCore.length} مهارة أساسية
-                            </Text>
+                            {([
+                                ['المهارات الموثقة', readiness.breakdown.skills, readiness.weights.skills],
+                                ['المشاريع والخبرة', readiness.breakdown.practical, readiness.weights.practical],
+                                ['الشهادات المهنية', readiness.breakdown.certifications, readiness.weights.certifications],
+                                ['المؤهل والمعدل', readiness.breakdown.academic, readiness.weights.academic],
+                                ['الدورات المكتملة', readiness.breakdown.learning, readiness.weights.learning],
+                            ] as const).map(([label, earned, maximum]) => <View key={label} style={styles.breakdown}><Text style={styles.note}>{label}</Text><Text style={styles.points}>{earned} / {maximum}</Text></View>)}
+                            <Text style={styles.note}>وثّقت {gap.matchedCore.length} من {gap.matchedCore.length + gap.missingCore.length} مهارة أساسية. الدورات والشهادات المعلّمة مكتملة ذاتيًا، وتحتاج مستندًا عند التقديم الفعلي.</Text>
 
                             {gap.missingCore.length > 0 && (
                                 <>
@@ -111,6 +134,23 @@ export default function CareerScreen() {
                             )}
                         </>
                     )}
+                </View>
+
+                <View style={styles.card}>
+                    <Text style={styles.heading}>الشهادات المهنية المقترحة</Text>
+                    <Text style={styles.note}>اختر «حصلت عليها» فقط بعد اجتياز الاختبار وصدور الشهادة باسمك. التحضير أو إكمال دورة لا يعني الحصول على الشهادة.</Text>
+                    {certificationState.error ? <Pressable onPress={() => void certificationState.reload()}><Text style={styles.link}>{certificationState.error} اضغط لإعادة التحميل.</Text></Pressable> : null}
+                    {roleCertifications.map(certificate => {
+                        const achieved = certificationState.achieved.includes(certificate.id);
+                        return <View key={certificate.id} style={styles.certificate}>
+                            <Text style={styles.skillName}>{certificate.title}</Text>
+                            <Text style={styles.note}>{certificate.provider} · {certificate.level}</Text>
+                            <Text style={styles.note}>{certificate.cost}</Text>
+                            <Text style={styles.note}>{certificate.note}</Text>
+                            <Pressable accessibilityRole="link" onPress={() => void Linking.openURL(certificate.url)}><Text style={styles.link}>صفحة الشهادة الرسمية</Text></Pressable>
+                            <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: achieved, disabled: !certificationState.ready || certificationState.busy }} disabled={!certificationState.ready || certificationState.busy} style={[styles.certButton, achieved && styles.certButtonDone]} onPress={() => void certificationState.change(certificate.id, !achieved)}><Text style={styles.certButtonText}>{achieved ? '✓ حصلت على هذه الشهادة' : '□ حصلت على هذه الشهادة'}</Text></Pressable>
+                        </View>;
+                    })}
                 </View>
 
                 {roleProfile ? (
@@ -249,4 +289,10 @@ const styles = StyleSheet.create({
         lineHeight: 27,
         textAlign: 'right',
     },
+    breakdown: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+    points: { color: '#12635E', fontSize: 15, fontWeight: '700' },
+    certificate: { backgroundColor: '#F8F9F5', borderWidth: 1, borderColor: '#DDE6E0', borderRadius: 14, padding: 16, gap: 7 },
+    certButton: { borderWidth: 1, borderColor: '#12635E', borderRadius: 12, padding: 12, minHeight: 46, justifyContent: 'center' },
+    certButtonDone: { backgroundColor: '#E5F3EE' },
+    certButtonText: { color: '#12635E', fontSize: 15, fontWeight: '600', textAlign: 'center' },
 });

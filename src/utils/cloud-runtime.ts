@@ -3,6 +3,7 @@ import { readPersonalProfile, PERSONAL_PROFILE_KEY } from './personal-profile';
 import { readSkillProfile, SKILL_PROFILE_KEY } from './skill-profile';
 import { readLearningPlan, LEARNING_PLAN_KEY } from './learning-plan';
 import { readLearningProgress, LEARNING_PROGRESS_KEY } from './learning-progress';
+import { readProfessionalCertifications, PROFESSIONAL_CERTIFICATIONS_KEY } from './professional-certifications';
 import { loadSavedCv, prepareSavedCvRestore } from './saved-cv';
 import { cvBytes, downloadCloudCv } from './cloud-files';
 import { CLOUD_META_KEY, parseCloudMeta, parseCloudSnapshot, type CloudMeta, type CloudRecord, type CloudSnapshot } from './cloud-types';
@@ -29,10 +30,10 @@ export function createCloudRuntime(getSession: () => Session | null, onRestoring
     check();
   };
   const localData = async () => {
-    const [personal, skills, plan, learningProgress, cv] = await Promise.all([readPersonalProfile(), readSkillProfile(), readLearningPlan(), readLearningProgress(), loadSavedCv()]); check();
-    return { personal, skills, plan, learningProgress, cv };
+    const [personal, skills, plan, learningProgress, professionalCertifications, cv] = await Promise.all([readPersonalProfile(), readSkillProfile(), readLearningPlan(), readLearningProgress(), readProfessionalCertifications(), loadSavedCv()]); check();
+    return { personal, skills, plan, learningProgress, professionalCertifications, cv };
   };
-  const describeLocal = (data: Awaited<ReturnType<typeof localData>>) => JSON.stringify({ personal: data.personal, skills: data.skills, plan: data.plan, learningProgress: data.learningProgress, cv: data.cv ? { identity: data.cv.file_id, name: data.cv.asset.name, size: data.cv.asset.size, mimeType: data.cv.asset.mimeType, review: data.cv.review } : null });
+  const describeLocal = (data: Awaited<ReturnType<typeof localData>>) => JSON.stringify({ personal: data.personal, skills: data.skills, plan: data.plan, learningProgress: data.learningProgress, professionalCertifications: data.professionalCertifications, cv: data.cv ? { identity: data.cv.file_id, name: data.cv.asset.name, size: data.cv.asset.size, mimeType: data.cv.asset.mimeType, review: data.cv.review } : null });
   async function sync(choice: SyncChoice = 'auto', enable = false): Promise<CloudResult> {
     const operation = pending.then(async () => {
       check();
@@ -50,13 +51,13 @@ export function createCloudRuntime(getSession: () => Session | null, onRestoring
           return { revision: data.revision, snapshot: parseCloudSnapshot(data.snapshot, owner), updated_at: data.updated_at };
         },
         hasLocalData: async () => {
-          const [personal, skills, plan, learningProgress, cv] = await Promise.all([readPersonalProfile(), readSkillProfile(), readLearningPlan(), readLearningProgress(), loadSavedCv()]);
+          const [personal, skills, plan, learningProgress, professionalCertifications, cv] = await Promise.all([readPersonalProfile(), readSkillProfile(), readLearningPlan(), readLearningProgress(), readProfessionalCertifications(), loadSavedCv()]);
           check();
-          return !!(personal || skills || plan.length || Object.keys(learningProgress).length || cv);
+          return !!(personal || skills || plan.length || Object.keys(learningProgress).length || professionalCertifications.length || cv);
         },
         prepareUpload: async () => {
           const [data, metadata] = await Promise.all([localData(), meta()]);
-          const { personal, skills, plan, learningProgress, cv: saved } = data;
+          const { personal, skills, plan, learningProgress, professionalCertifications, cv: saved } = data;
           check();
           let cv: CloudSnapshot['cv'] = null;
           let binding: CloudMeta['fileBinding'] = null;
@@ -76,7 +77,7 @@ export function createCloudRuntime(getSession: () => Session | null, onRestoring
             cv = { path, name: saved.asset.name, size, mimeType: saved.asset.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', review: saved.review };
             binding = { identity: saved.file_id!, path };
           }
-          const snapshot = parseCloudSnapshot({ version: 1, personal, skills, plan, learningProgress, cv }, owner);
+          const snapshot = parseCloudSnapshot({ version: 1, personal, skills, plan, learningProgress, professionalCertifications, cv }, owner);
           return { snapshot, localState: describeLocal(data), binding, cleanup: async () => { if (createdPath) await client.storage.from('masarak-cvs').remove([createdPath]); } };
         },
         saveRemote: async (snapshot, expected) => {
@@ -106,6 +107,7 @@ export function createCloudRuntime(getSession: () => Session | null, onRestoring
                   [SKILL_PROFILE_KEY, snapshot.skills ? JSON.stringify(snapshot.skills) : null],
                   [LEARNING_PLAN_KEY, JSON.stringify(snapshot.plan)],
                   [LEARNING_PROGRESS_KEY, JSON.stringify(snapshot.learningProgress)],
+                  [PROFESSIONAL_CERTIFICATIONS_KEY, JSON.stringify(snapshot.professionalCertifications)],
                 ], scope);
                 check(); await staged.finish().catch(() => undefined);
                 return { binding: saved && snapshot.cv ? { identity: saved.file_id!, path: snapshot.cv.path } : null, localState: describeLocal(await localData()) };
