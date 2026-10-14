@@ -26,3 +26,9 @@ The user selected Send Email Hook instead of the previously suggested Gmail SMTP
 **Why:** The user explicitly chose to implement the hook shown in their Supabase dashboard.
 
 **How to apply:** Implement and verify the hook path without silently reverting to SMTP. Since a hook replaces normal email delivery, preserve password recovery alongside signup OTP delivery, and keep the hook disabled until its sender is configured and tested.
+
+Keep the managed Brevo email hook in the Replit backend rather than assuming the Replit connection can run directly in a Supabase Edge Function.
+
+**Why:** Replit's connector authenticates using the Replit runtime identity. Moving the hook to Supabase would require a different credential arrangement and duplicate secret provisioning.
+
+**How to apply:** Reuse the managed connection without extracting its API key. Explain that the backend needs its own stable published HTTPS endpoint, distinct from publishing the native app, and obtain user approval before publishing.

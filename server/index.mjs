@@ -3,6 +3,7 @@ import multer from 'multer';
 import { fileURLToPath } from 'node:url';
 import { networkInterfaces } from 'node:os';
 import { analyzeText, extractText, CvError } from './analysis.mjs';
+import { createEmailHookRouter } from './auth-email-hook.mjs';
 
 // Read only the server environment. Never include this module in the app bundle.
 try { process.loadEnvFile(fileURLToPath(new URL('.env', import.meta.url))); } catch { /* Existing process environment is also supported. */ }
@@ -11,6 +12,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
 let inProgress = false;
 const attempts = [];
 app.disable('x-powered-by');
+app.use('/api/auth/send-email', createEmailHookRouter());
 app.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
   const origin = req.headers.origin;

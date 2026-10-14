@@ -18,6 +18,10 @@ author = "agent"
 task = "workflow.run"
 args = "Masarak preview"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Masarak email hook"
+
 [[workflows.workflow]]
 name = "Masarak preview"
 author = "agent"
@@ -30,6 +34,22 @@ task = "shell.exec"
 args = "EXPO_UNSTABLE_HEADLESS=1 npx expo start --web --host lan --port 5000"
 waitForPort = 5000
 
+[[workflows.workflow]]
+name = "Masarak email hook"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=3001 npm run email-hook"
+waitForPort = 3001
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[ports]]
+localPort = 3001
+externalPort = 3001
+
 [[ports]]
 localPort = 5000
 externalPort = 80
@@ -37,3 +57,9 @@ externalPort = 80
 [[ports]]
 localPort = 5001
 externalPort = 3000
+
+[userenv]
+
+[userenv.shared]
+EMAIL_HOOK_SENDER_ID = "1"
+EMAIL_HOOK_REDIRECT_URLS = "[\"https://7026c07b-53e3-497d-affa-b6aac928fb2c-00-6jtedkfbfatg.pike.replit.dev/auth-callback\",\"masarak://auth-callback\"]"
