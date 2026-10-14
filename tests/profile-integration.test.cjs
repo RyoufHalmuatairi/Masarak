@@ -103,3 +103,22 @@ test('career ranking and missing skills reflect the current approved profile aft
   assert.equal(result.matched, 0); assert.equal(result.missing.length, core.length);
   assert.equal(h.matches(null).every(row => row.score === null), true);
 });
+
+test('full dictionary skills survive approval and reload without inflating unrelated career scores', async () => {
+  const h = harness();
+  await h.api.saveReviewedCv(analysis(['T0001', 'T0153', 'T0710']));
+  const profile = await h.api.readSkillProfile();
+  assert.deepEqual(sorted(profile.skill_ids), ['T0001', 'T0153', 'T0710']);
+  assert.equal(h.matches(profile.skill_ids).find(c => c.career_id === 'C05').score, 0);
+});
+
+test('three programming languages count as one core competency and do not alter the denominator', async () => {
+  const h = harness();
+  const cv = analysis(['T0644', 'T0644', 'T0644']);
+  cv.skills.forEach((skill, index) => { skill.name = ['Java', 'Python', 'C++'][index]; });
+  await h.api.saveReviewedCv(cv);
+  const profile = await h.api.readSkillProfile();
+  assert.deepEqual(plain(profile.skill_ids), ['T0644']);
+  const report = h.matches(profile.skill_ids).find(c => c.career_id === 'C01');
+  assert.equal(report.matched, 1); assert.equal(report.total, 6); assert.equal(report.score, 17);
+});

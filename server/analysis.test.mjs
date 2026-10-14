@@ -19,7 +19,7 @@ test('validates source evidence and rejects unsupported information', () => {
   assert.ok(safe.warnings.length >= 1);
   assert.equal(safe.certificates[0].date, '');
   const unmapped = validateAnalysis({ ...result, skills: [{ ...result.skills[0], mapped_skill_id: 'UNKNOWN' }] }, text);
-  assert.equal(unmapped.skills[0].mapped_skill_id, null);
+  assert.equal(unmapped.skills[0].mapped_skill_id, id); // A known literal name repairs an invalid model ID.
   assert.throws(() => validateAnalysis({ skills: 'bad' }, text));
 });
 test('handles schema completion and provider failures without leaking secrets', async () => {

@@ -7,8 +7,18 @@ import { CV_MIME_TYPES, formatCvSize, validateCvFile } from '../utils/cv-file';
 import { analyzeCv } from '../utils/cv-api';
 import { readSkillProfile, saveReviewedCv, clearReviewedCv, type CvAnalysis, type CvProfile } from '../utils/skill-profile';
 import dataset from '../masarak_dataset.json';
+import { careerTitles } from '../utils/career-matches';
+import { createSkillMatcher } from '../utils/skill-matching.mjs';
 import { captureDataScope } from '../utils/scoped-storage';
 import { loadSavedCv, storeCvFile, storeCvReview, deleteSavedCv } from '../utils/saved-cv';
+const matchSkillName = createSkillMatcher(dataset);
+function skillScoreNote(id: string | null) {
+  if (!id) return 'لم نجد ربطًا موثوقًا لهذا الاسم؛ تُحفظ المهارة للمراجعة ولا نحتسبها بالتخمين.';
+  const core = dataset.career_skills.filter(row => row.skill_id === id && row.priority === 'core').map(row => careerTitles[row.career_id] ?? row.career_id);
+  if (core.length) return 'تدخل تغطية المتطلبات الأساسية لمسار: ' + core.join('، ') + '. تُحتسب الكفاءة مرة واحدة مهما تكررت أدواتها.';
+  if (dataset.career_skills.some(row => row.skill_id === id)) return 'مهارة مساندة مرتبطة بمسارات؛ تظهر في ملفك والخطة، ولا تغير نسبة المتطلبات الأساسية.';
+  return 'مهارة معروفة في القاموس ومحفوظة، لكنها ليست ضمن متطلبات المسارات الستة الحالية.';
+}
 
 export default function UploadCvScreen() {
   const router = useRouter();
@@ -166,9 +176,10 @@ export default function UploadCvScreen() {
           {!analysis.skills.length ? <Text style={styles.note}>لم نستخرج مهارات مدعومة بنص واضح.</Text> : null}
           {analysis.skills.map((skill, index) => <View key={index} style={styles.card}>
             {selection('اعتماد هذه المهارة', includedSkills.includes(index), () => toggle(includedSkills, index, setIncludedSkills))}
-            <TextInput accessibilityLabel="اسم المهارة" style={styles.input} value={skill.name} editable={!busy} onChangeText={name => setAnalysis({ ...analysis, skills: analysis.skills.map((item, i) => i === index ? { ...item, name } : item) })} />
+            <TextInput accessibilityLabel="اسم المهارة" style={styles.input} value={skill.name} editable={!busy} onChangeText={name => setAnalysis({ ...analysis, skills: analysis.skills.map((item, i) => i === index ? { ...item, name, mapped_skill_id: matchSkillName(name) } : item) })} />
             <Text style={styles.note}>من السيرة: {skill.evidence}</Text>
-            <Text style={styles.text}>{skill.mapped_skill_id ? `ربط مقترح: ${dataset.skills.find(item => item.skill_id === skill.mapped_skill_id)?.name}` : 'هذه المهارة غير مرتبطة بقاموس المسارات الحالي؛ تُحفظ ولا تدخل نسبة التغطية.'}</Text>
+            <Text style={styles.text}>{skill.mapped_skill_id ? `ربط مقترح: ${dataset.skills.find(item => item.skill_id === skill.mapped_skill_id)?.name}` : 'لم نجد ربطًا موثوقًا لهذا الاسم في القاموس؛ احتفظنا به للمراجعة.'}</Text>
+            <Text style={styles.note}>{skillScoreNote(skill.mapped_skill_id)}</Text>
             {skill.mapped_skill_id ? <Pressable disabled={busy} onPress={() => setAnalysis({ ...analysis, skills: analysis.skills.map((item, i) => i === index ? { ...item, mapped_skill_id: null } : item) })}><Text style={styles.link}>إلغاء الربط المقترح مع الاحتفاظ بالمهارة</Text></Pressable> : null}
           </View>)}
           {(['education', 'projects', 'activities'] as const).map(section => {

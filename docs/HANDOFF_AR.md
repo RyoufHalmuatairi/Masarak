@@ -50,3 +50,9 @@ npm run test:cv-server
 
 ## تنظيم الملفات
 src/app للشاشات، src/utils للبيانات والتحليل والحسابات، src/contexts لسياق الدخول، server للتحليل، tests لاختبارات الحسابات والملف، docs لتجهيز Supabase، وserver/README_AR.md لتفاصيل الخادم.
+
+## تحديث محلي — 14 أكتوبر 2026
+
+تم تشغيل فرع updates-Hour وتجربة السيرة على الجهاز؛ مشكلة مهلة الاتصال كانت بحاجة لتشغيل خادم السيرة في طرفية مستقلة. أُصلح فقد بعض عناصر قوائم المهارات، ثم وُسّع القاموس بطبقة أسماء عربية وإنجليزية ووُحد حساب التغطية. مصادر التغيير وحدوده في docs/DATASET_AND_SCORING_AR.md. هذه التعديلات محلية حتى يتم عمل commit/push لها؛ لا نفترض أنها موجودة في GitHub.
+
+لتشغيل كل الاختبارات المرتبطة بالملف والحسابات والتغطية: node --test tests/profile-integration.test.cjs tests/auth-storage.test.cjs tests/skill-gap.test.cjs. وللخادم: npm run test:cv-server.

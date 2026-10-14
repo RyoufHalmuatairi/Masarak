@@ -8,13 +8,16 @@ const root = process.env.MASARAK_TEST_ROOT || path.resolve(__dirname, '..');
 const ts = require(path.join(root, 'node_modules/typescript'));
 const dataset = JSON.parse(fs.readFileSync(path.join(root, 'src/masarak_dataset.json'), 'utf8'));
 
-// Compile the TypeScript file and load it with the real dataset.
-const source = fs.readFileSync(path.join(root, 'src/utils/skill-gap.ts'), 'utf8');
-const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
-const mod = {};
-vm.runInNewContext(output, { exports: mod, require: () => dataset });
-const { getSkillGapReport, readinessLevel } = mod;
-
+// Use the same recursive module graph as the app after centralizing the score.
+const modules = new Map();
+function load(file) {
+  if (modules.has(file)) return modules.get(file);
+  const output = ts.transpileModule(fs.readFileSync(path.join(root, 'src/utils', file), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
+  const ex = {}; modules.set(file, ex);
+  vm.runInNewContext(output, { exports: ex, require: name => name.endsWith('masarak_dataset.json') ? dataset : load(name.replace('./', '') + '.ts') });
+  return ex;
+}
+const { getSkillGapReport, readinessLevel } = load('skill-gap.ts');
 const coreIds = careerId => [...new Set(dataset.career_skills.filter(l => l.career_id === careerId && l.priority === 'core').map(l => l.skill_id))];
 
 test('no saved skills gives no score and no level', () => {
@@ -57,9 +60,6 @@ test('level thresholds', () => {
 
 test('score matches the one used on the home screen', () => {
   const ids = coreIds('C03').slice(0, 3);
-  const calc = require('node:vm');
-  const out = ts.transpileModule(fs.readFileSync(path.join(root, 'src/utils/career-matches.ts'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const ex = {}; calc.runInNewContext(out, { exports: ex, require: () => dataset });
-  const home = ex.getCareerMatches(ids).find(c => c.career_id === 'C03').score;
+  const home = load('career-matches.ts').getCareerMatches(ids).find(c => c.career_id === 'C03').score;
   assert.equal(getSkillGapReport('C03', ids).score, home);
 });

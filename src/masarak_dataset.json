@@ -1,5 +1,5 @@
 {
-  "version": "0.2",
+  "version": "0.3",
   "intended_use": "prototype only; not validated Saudi employment readiness",
   "careers": [
     {
@@ -38217,6 +38217,246 @@
       "evidence_summary": "Analyzing network performance data; broader mapping",
       "ssf_sheet": "Information technology",
       "ssf_cell": "G56"
+    },
+    {
+      "career_id": "C01",
+      "skill_id": "T0879",
+      "name": "Version control/source code management tools usage",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://www.onetonline.org/link/details/15-1252.00",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B891"
+    },
+    {
+      "career_id": "C01",
+      "skill_id": "T0710",
+      "name": "Scripting and programming languages",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://www.onetonline.org/link/details/15-1252.00",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B722"
+    },
+    {
+      "career_id": "C01",
+      "skill_id": "T0903",
+      "name": "Website development",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://www.onetonline.org/link/details/15-1252.00",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B915"
+    },
+    {
+      "career_id": "C02",
+      "skill_id": "T0644",
+      "name": "Programming",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://www.onetonline.org/link/details/15-2051.01",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B656"
+    },
+    {
+      "career_id": "C02",
+      "skill_id": "T0473",
+      "name": "Knowledge of database concepts",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://www.onetonline.org/link/details/15-2051.01",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B485"
+    },
+    {
+      "career_id": "C03",
+      "skill_id": "T0473",
+      "name": "Knowledge of database concepts",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://www.onetonline.org/link/details/15-2051.00",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B485"
+    },
+    {
+      "career_id": "C04",
+      "skill_id": "T0879",
+      "name": "Version control/source code management tools usage",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://cloud.google.com/learn/certification/machine-learning-engineer",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B891"
+    },
+    {
+      "career_id": "C04",
+      "skill_id": "T0710",
+      "name": "Scripting and programming languages",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://cloud.google.com/learn/certification/machine-learning-engineer",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B722"
+    },
+    {
+      "career_id": "C05",
+      "skill_id": "T0153",
+      "name": "Computer operating systems and hardware usage",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://www.onetonline.org/link/details/15-1212.00",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B165"
+    },
+    {
+      "career_id": "C05",
+      "skill_id": "T0710",
+      "name": "Scripting and programming languages",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://www.onetonline.org/link/details/15-1212.00",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B722"
+    },
+    {
+      "career_id": "C05",
+      "skill_id": "T0571",
+      "name": "Networking",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://www.onetonline.org/link/details/15-1212.00",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B583"
+    },
+    {
+      "career_id": "C05",
+      "skill_id": "T0605",
+      "name": "Penetration testing",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://www.onetonline.org/link/details/15-1212.00",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B617"
+    },
+    {
+      "career_id": "C05",
+      "skill_id": "T0644",
+      "name": "Programming",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://www.onetonline.org/link/details/15-1212.00",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B656"
+    },
+    {
+      "career_id": "C06",
+      "skill_id": "T0153",
+      "name": "Computer operating systems and hardware usage",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://www.onetonline.org/link/details/15-1241.00",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B165"
+    },
+    {
+      "career_id": "C06",
+      "skill_id": "T0710",
+      "name": "Scripting and programming languages",
+      "priority": "additional",
+      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
+      "weight": 0,
+      "target_level": null,
+      "status": "prototype_semantic_mapping",
+      "evidence_url": "https://www.onetonline.org/link/details/15-1241.00",
+      "evidence_section": "Software skills / Tasks",
+      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
+      "source_sheet": "Unique Technical Skills",
+      "source_cell": "B722"
     }
   ],
   "scoring": {
@@ -38226,6 +38466,1204 @@
     "missing_cv_mention_means": "not evidenced, not proven absent",
     "no_evidence_result": null,
     "ties": "retain tied careers; do not fabricate rank",
-    "proficiency_assessed": false
+    "proficiency_assessed": false,
+    "method_version": "unique-core-v1",
+    "thresholds": {
+      "developing": 40,
+      "ready": 70,
+      "origin": "project UI design thresholds; not empirically validated"
+    }
+  },
+  "skill_aliases": [
+    {
+      "alias": "Java",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Python",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "C",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "C++",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "C#",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "JavaScript",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "TypeScript",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Go",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Golang",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Ruby",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "PHP",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Kotlin",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Swift",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Rust",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Dart",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "R programming",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "برمجة",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "البرمجة",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "جافا",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "بايثون",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "سي بلس بلس",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Python programming",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Java programming",
+      "skill_id": "T0644",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Linux",
+      "skill_id": "T0153",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Linux OS",
+      "skill_id": "T0153",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Ubuntu",
+      "skill_id": "T0153",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Windows",
+      "skill_id": "T0153",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Windows OS",
+      "skill_id": "T0153",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Computer operating systems",
+      "skill_id": "T0153",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "لينكس",
+      "skill_id": "T0153",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "استخدام أنظمة التشغيل",
+      "skill_id": "T0153",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Bash",
+      "skill_id": "T0710",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Shell scripting",
+      "skill_id": "T0710",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Bash scripting",
+      "skill_id": "T0710",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "PowerShell",
+      "skill_id": "T0710",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Command line",
+      "skill_id": "T0710",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Command-line",
+      "skill_id": "T0710",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Linux command line",
+      "skill_id": "T0710",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "سطر الأوامر",
+      "skill_id": "T0710",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "برمجة نصوص شل",
+      "skill_id": "T0710",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Git",
+      "skill_id": "T0879",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Git version control",
+      "skill_id": "T0879",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Version control",
+      "skill_id": "T0879",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Source control",
+      "skill_id": "T0879",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "إدارة الإصدارات",
+      "skill_id": "T0879",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Encryption",
+      "skill_id": "T0179",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Cryptography",
+      "skill_id": "T0179",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "AES",
+      "skill_id": "T0179",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "AES-256",
+      "skill_id": "T0179",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "AES-256 encryption",
+      "skill_id": "T0179",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "SHA-256",
+      "skill_id": "T0179",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "SHA-256 hashing",
+      "skill_id": "T0179",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "التشفير",
+      "skill_id": "T0179",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Penetration testing",
+      "skill_id": "T0605",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "اختبار الاختراق",
+      "skill_id": "T0605",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Vulnerability assessment",
+      "skill_id": "T0893",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Vulnerability scanning",
+      "skill_id": "T0893",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "تقييم الثغرات",
+      "skill_id": "T0893",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "فحص الثغرات",
+      "skill_id": "T0893",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Incident response",
+      "skill_id": "T0198",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Cyber incident response",
+      "skill_id": "T0198",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Cybersecurity incident response",
+      "skill_id": "T0198",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "الاستجابة للحوادث",
+      "skill_id": "T0198",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Identity and access management",
+      "skill_id": "T0408",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "IAM",
+      "skill_id": "T0408",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "إدارة الهوية والوصول",
+      "skill_id": "T0408",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Unit testing",
+      "skill_id": "T0767",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Software testing",
+      "skill_id": "T0767",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Integration testing",
+      "skill_id": "T0767",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "اختبار البرمجيات",
+      "skill_id": "T0767",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "اختبارات الوحدات",
+      "skill_id": "T0767",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Software architecture",
+      "skill_id": "T0758",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Software design",
+      "skill_id": "T0758",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "تصميم البرمجيات",
+      "skill_id": "T0758",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Software development",
+      "skill_id": "T0759",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Application development",
+      "skill_id": "T0759",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "تطوير البرمجيات",
+      "skill_id": "T0759",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Data visualization",
+      "skill_id": "T0255",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Data visualisation",
+      "skill_id": "T0255",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "تصور البيانات",
+      "skill_id": "T0255",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "عرض البيانات بصريا",
+      "skill_id": "T0255",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Data cleaning",
+      "skill_id": "T0223",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Data cleansing",
+      "skill_id": "T0223",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "تنظيف البيانات",
+      "skill_id": "T0223",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Data analytics",
+      "skill_id": "T0217",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Data analysis",
+      "skill_id": "T0217",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "تحليل البيانات",
+      "skill_id": "T0217",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Statistical analysis",
+      "skill_id": "T0783",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "التحليل الإحصائي",
+      "skill_id": "T0783",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Machine learning",
+      "skill_id": "T0498",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "ML",
+      "skill_id": "T0498",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "تعلم الآلة",
+      "skill_id": "T0498",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Natural language processing",
+      "skill_id": "T0539",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "NLP",
+      "skill_id": "T0539",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "معالجة اللغة الطبيعية",
+      "skill_id": "T0539",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Networking",
+      "skill_id": "T0571",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Computer networking",
+      "skill_id": "T0571",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "TCP/IP",
+      "skill_id": "T0571",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "أساسيات الشبكات",
+      "skill_id": "T0571",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "شبكات الحاسب",
+      "skill_id": "T0571",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Network security",
+      "skill_id": "T0560",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "أمن الشبكات",
+      "skill_id": "T0560",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Network configuration",
+      "skill_id": "T0548",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "تهيئة الشبكات",
+      "skill_id": "T0548",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Technical documentation",
+      "skill_id": "T0682",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "Reporting and documentation",
+      "skill_id": "T0682",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    },
+    {
+      "alias": "التوثيق التقني",
+      "skill_id": "T0682",
+      "relationship": "technology_or_term_to_foundational_competency",
+      "review_status": "curated_project_mapping",
+      "evidence_urls": [
+        "https://www.onetonline.org/link/summary/15-1252.00",
+        "https://www.onetonline.org/link/summary/15-1212.00"
+      ],
+      "note": "Supports a basic competency mention; does not establish proficiency or all advanced subskills."
+    }
+  ],
+  "matching": {
+    "checked_on": "2026-10-14",
+    "scope": "Saudi SSF canonical skills + curated Arabic/English technology aliases + O*NET/Google role references",
+    "exact_aliases_only": true,
+    "duplicate_competencies_count_once": true,
+    "legacy_ids_preserved": true,
+    "core_requirements_preserved": true,
+    "validated_employment_probability": false,
+    "alias_sources": [
+      "https://www.onetonline.org/link/summary/15-1252.00",
+      "https://www.onetonline.org/link/summary/15-1212.00"
+    ]
   }
 }

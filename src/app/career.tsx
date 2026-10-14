@@ -80,7 +80,7 @@ export default function CareerScreen() {
                 </Pressable>
 
                 <View style={styles.card}>
-                    <Text style={styles.heading}>جاهزيتك لهذه الوظيفة</Text>
+                    <Text style={styles.heading}>جاهزيتك المبدئية وفق تغطية المهارات</Text>
 
                     {gap.score === null || gap.level === null ? (
                         <Text style={styles.note}>
@@ -93,13 +93,13 @@ export default function CareerScreen() {
                                 {readinessLabels[gap.level]}
                             </Text>
                             <Text style={styles.note}>
-                                تملك {gap.matchedCore.length} من{' '}
+                                وثّقت {gap.matchedCore.length} من{' '}
                                 {gap.matchedCore.length + gap.missingCore.length} مهارة أساسية
                             </Text>
 
                             {gap.missingCore.length > 0 && (
                                 <>
-                                    <Text style={styles.skillName}>مهارات أساسية ناقصة</Text>
+                                    <Text style={styles.skillName}>مهارات أساسية لم تُوثّق بعد</Text>
                                     {gap.missingCore.map((skill) => (
                                         <Text key={skill.skill_id} style={styles.note}>
                                             • {skill.name}

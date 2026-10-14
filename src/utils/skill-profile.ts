@@ -9,7 +9,7 @@ export type CvAnalysis = { skills: CvSkill[]; certificates: CvCertificate[]; exp
 export type CvProfile = CvAnalysis & { reviewed_at: string };
 export type SkillProfile = { version: 3; skill_ids: string[]; manual_skill_ids: string[]; excluded_cv_skill_ids: string[]; cv: CvProfile | null };
 const key = 'masarak-skills-v1';
-const validIds = new Set(dataset.career_skills.map(item => item.skill_id));
+const validIds = new Set(dataset.skills.map(item => item.skill_id));
 const uniqueValid = (ids: string[]) => [...new Set(ids.filter(id => validIds.has(id)))];
 const isIds = (value: unknown): value is string[] => Array.isArray(value) && value.every(id => typeof id === 'string');
 
