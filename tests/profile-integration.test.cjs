@@ -17,7 +17,7 @@ function harness(initial = null) {
     const output = ts.transpileModule(fs.readFileSync(path.join(root, 'src/utils', name), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
     const exports = {};
     modules.set(name, exports);
-    vm.runInNewContext(output, { exports, require: name => name.includes('async-storage') ? storage : name.endsWith('masarak_dataset.json') ? dataset : load(name.replace('./', '') + '.ts') });
+    vm.runInNewContext(output, { exports, require: name => name.includes('async-storage') ? storage : name.endsWith('masarak_dataset.json') ? dataset : name === '../constants/job-paths' ? { resolveBaseCareerId: id => id, jobPaths: dataset.careers.map(career => ({ id: career.career_id, title: career.title, description: career.description })) } : name === '../constants/job-path-requirements' ? { requirementsForCareerPath: id => dataset.career_skills.filter(row => row.career_id === id) } : load(name.replace('./', '') + '.ts') });
     return exports;
   }
   return { api: load('skill-profile.ts'), matches: load('career-matches.ts').getCareerMatches, raw: () => saved, failing: value => { fail = value; } };
@@ -120,5 +120,5 @@ test('three programming languages count as one core competency and do not alter 
   const profile = await h.api.readSkillProfile();
   assert.deepEqual(plain(profile.skill_ids), ['T0644']);
   const report = h.matches(profile.skill_ids).find(c => c.career_id === 'C01');
-  assert.equal(report.matched, 1); assert.equal(report.total, 6); assert.equal(report.score, 17);
+  assert.equal(report.matched, 1); assert.equal(report.total, 7); assert.equal(report.score, 14);
 });
