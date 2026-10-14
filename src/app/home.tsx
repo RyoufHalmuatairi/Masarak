@@ -32,7 +32,7 @@ export default function HomeScreen() {
     { title: profile?.cv ? 'سيرتي الذاتية' : 'رفع السيرة', subtitle: profile?.cv ? 'راجع معلوماتك المحفوظة' : 'خطوتك الأولى تبدأ هنا', route: '/upload-cv', icon: 'upload' },
     { title: 'تحليل المهارات', subtitle: 'اكتشف المسارات ومهاراتها', route: '/careers', icon: 'careers' },
     { title: 'تخصصات الجامعة', subtitle: 'وظائف ومهارات وشهادات كل تخصص', route: '/majors', icon: 'careers' },
-    { title: 'خطة التعلم', subtitle: learning.ready && !learning.error ? `${learning.plan.length} مهارات في خطتك` : 'خطواتك نحو التطور', route: '/learning-plan', icon: 'plan' },
+    { title: 'خطة التعلم', subtitle: learning.ready && !learning.error ? `${learning.plan.length} عناصر في خطتك` : 'خطواتك نحو التطور', route: '/learning-plan', icon: 'plan' },
     { title: 'ملف مهاراتي', subtitle: 'راجع مهاراتك وأضف إليها', route: '/profile', icon: 'profile' },
   ] as const;
   return <SafeAreaView edges={['top', 'left', 'right']} style={ui.screen}>

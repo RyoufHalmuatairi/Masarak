@@ -81,6 +81,11 @@ test('learning progress accepts valid completion dates and old snapshots remain 
   assert.equal(updated.learningProgress['github-skills-introduction'], '2026-10-14T10:00:00.000Z');
   assert.throws(() => types.parseCloudSnapshot({ ...clone(emptySnapshot), learningProgress: { course: 'not-a-date' } }, 'A'));
 });
+test('cloud snapshots retain safe roadmap items and discard malformed plan entries', () => {
+  const h = harness(); const types = h.load('cloud-types.ts');
+  const parsed = types.parseCloudSnapshot({ ...clone(emptySnapshot), plan: [dataset.career_skills[0].skill_id, 'cert:github-foundations', 'experience:job-soc-analyst:0', 'project:job-soc-analyst:1', 'project:../other:1'] }, 'A');
+  assert.deepEqual(clone(parsed.plan), [dataset.career_skills[0].skill_id, 'cert:github-foundations', 'experience:job-soc-analyst:0', 'project:job-soc-analyst:1']);
+});
 
 test('cloud snapshots preserve selected professional certifications safely', () => {
   const h = harness();

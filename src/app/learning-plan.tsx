@@ -10,9 +10,10 @@ import { useSkillProfile } from '../hooks/use-skill-profile';
 import { usePersonalProfile } from '../hooks/use-personal-profile';
 import { useProfessionalCertifications } from '../hooks/use-professional-certifications';
 import { jobPathById } from '../constants/job-paths';
-import { jobPathRequirementProfile } from '../constants/job-path-requirements';
+import { jobPathRequirementProfile, requirementsForCareerPath } from '../constants/job-path-requirements';
 import { certificationsByIds } from '../constants/professional-certifications';
 import { displaySkillName } from '../utils/skill-labels';
+import { certificationPlanId, experiencePlanId, projectPlanId } from '../utils/learning-plan';
 
 export default function LearningPlanScreen() {
   const router = useRouter();
@@ -24,10 +25,31 @@ export default function LearningPlanScreen() {
   const selectedPath = jobPathById(personalState.personal?.careerGoal);
   const roleProfile = jobPathRequirementProfile(selectedPath?.id ?? '');
   const roleCertifications = certificationsByIds(roleProfile?.certificationIds ?? []);
+  const requirements = requirementsForCareerPath(selectedPath?.id ?? '');
   const skills = learning.plan.flatMap((id) => {
     const skill = dataset.skills.find((item) => item.skill_id === id);
     return skill ? [skill] : [];
   });
+  const plannedCertifications = roleCertifications.filter(item => learning.plan.includes(certificationPlanId(item.id)));
+  const hasPlannedExperience = Boolean(selectedPath && learning.plan.includes(experiencePlanId(selectedPath.id)));
+  const plannedProjects = roleProfile && selectedPath ? roleProfile.projects.flatMap((project, index) => learning.plan.includes(projectPlanId(selectedPath.id, index)) ? [{ project, index }] : []) : [];
+  const evidenceText = (value: unknown) => value && typeof value === 'object' ? Object.values(value as Record<string, unknown>).filter(item => typeof item === 'string').join(' ').toLocaleLowerCase() : '';
+  const relevant = (value: unknown) => roleProfile?.evidenceKeywords.some(keyword => evidenceText(value).includes(keyword.toLocaleLowerCase())) ?? false;
+  const relevantExperiences = profileState.profile?.cv?.experiences.filter(relevant).length ?? 0;
+  const relevantProjects = profileState.profile?.cv?.projects?.filter(relevant).length ?? 0;
+  const skillProgress = (skillId: string) => {
+    if (profileState.profile?.skill_ids.includes(skillId)) return 100;
+    const resources = getLearningResources(skillId);
+    const completed = resources.filter(resource => courseProgress.progress[resource.id]).length;
+    return resources.length ? Math.round(20 + 60 * completed / resources.length) : 20;
+  };
+  const progressItems = [
+    ...skills.map(skill => skillProgress(skill.skill_id)),
+    ...plannedCertifications.map(item => certificationState.achieved.includes(item.id) ? 100 : 20),
+    ...(hasPlannedExperience ? [relevantExperiences ? 100 : 20] : []),
+    ...plannedProjects.map(item => relevantProjects > item.index ? 100 : 20),
+  ];
+  const overallProgress = progressItems.length ? Math.round(progressItems.reduce((sum, value) => sum + value, 0) / progressItems.length) : 0;
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.screen}>
@@ -48,6 +70,9 @@ export default function LearningPlanScreen() {
           <>
             <View style={styles.card}>
               <Text style={styles.heading}>هدفك: {selectedPath.title}</Text>
+              <Text style={styles.progressNumber}>{overallProgress}%</Text>
+              <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${overallProgress}%` }]} /></View>
+              <Text style={styles.note}>تقدم خطتك: {progressItems.length} عناصر مختارة. هذه النسبة تقيس الإنجاز والدليل، وليست اختبارًا لمستوى الاحتراف.</Text>
               <Text style={styles.subheading}>1. المؤهل الجامعي</Text>
               <Text style={styles.text}>{roleProfile.education}</Text>
               <Text style={styles.note}>هذا البند يُقرأ من تخصصك ومؤهلك ومعدلك في «بياناتي». لا تضيفيه كمهارة أو شهادة مهنية.</Text>
@@ -56,22 +81,27 @@ export default function LearningPlanScreen() {
               <Text style={styles.subheading}>2. الشهادة المهنية الاختيارية</Text>
               <Text style={styles.note}>{roleCertifications.length ? 'يكفي اختيار الشهادة الأنسب لبيئة العمل المستهدفة. لا يلزم جمع جميع الخيارات، ولا تضعي علامة إلا بعد صدور الشهادة باسمك.' : 'لا توجد شهادة مهنية عامة ذات أولوية للخريج في هذا المسار؛ ركزي على المهارات والمشروع.'}</Text>
               {certificationState.error ? <Text style={styles.note}>{certificationState.error}</Text> : null}
-              {roleCertifications.map(certificate => {
+              {plannedCertifications.length === 0 ? <Text style={styles.note}>لم تضيفي شهادة مهنية إلى خطتك. أضيفي الأنسب من صفحة تفاصيل المسار أو الـRoadmap.</Text> : null}
+              {plannedCertifications.map(certificate => {
                 const achieved = certificationState.achieved.includes(certificate.id);
                 return <View key={certificate.id} style={styles.resource}>
                   <Text style={styles.resourceTitle}>{certificate.title}</Text>
                   <Text style={styles.note}>{certificate.provider} · {certificate.level}</Text>
                   <Text style={styles.note}>{certificate.cost}</Text>
                   <Text style={styles.note}>{certificate.note}</Text>
+                  <Text style={styles.progressLabel}>{achieved ? 'مكتملة وموثقة · 100%' : 'مخطط لها · 20%'}</Text>
+                  <View style={styles.progressTrack}><View style={[styles.progressFill, { width: achieved ? '100%' : '20%' }]} /></View>
                   <Pressable accessibilityRole="link" onPress={() => void Linking.openURL(certificate.url)}><Text style={styles.link}>صفحة الشهادة الرسمية</Text></Pressable>
                   <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: achieved, disabled: !certificationState.ready || certificationState.busy }} disabled={!certificationState.ready || certificationState.busy} style={[styles.checkButton, achieved && styles.checkButtonDone]} onPress={() => void certificationState.change(certificate.id, !achieved)}><Text style={styles.checkText}>{achieved ? '✓ حصلت على الشهادة' : '□ حصلت على الشهادة'}</Text></Pressable>
+                  <Pressable accessibilityRole="button" onPress={() => void learning.change(certificationPlanId(certificate.id), false)}><Text style={styles.link}>إزالة الشهادة من خطتي</Text></Pressable>
                 </View>;
               })}
             </View>
             <View style={styles.card}>
               <Text style={styles.subheading}>3. الخبرة والمشاريع المطلوبة</Text>
-              <Text style={styles.text}>{roleProfile.experience}</Text>
-              {roleProfile.projects.map(project => <Text key={project} style={styles.text}>• {project}</Text>)}
+              {!hasPlannedExperience && plannedProjects.length === 0 ? <Text style={styles.note}>لم تضيفي خبرة أو مشروعًا إلى خطتك. اختاريها من تفاصيل المسار أو الـRoadmap.</Text> : null}
+              {hasPlannedExperience ? <View style={styles.resource}><Text style={styles.resourceTitle}>الخبرة العملية المستهدفة</Text><Text style={styles.text}>{roleProfile.experience}</Text><Text style={styles.progressLabel}>{relevantExperiences ? 'ظهر دليل مرتبط في سيرتك · 100%' : 'مخطط لها · 20%'}</Text><View style={styles.progressTrack}><View style={[styles.progressFill, { width: relevantExperiences ? '100%' : '20%' }]} /></View><Pressable onPress={() => void learning.change(experiencePlanId(selectedPath.id), false)}><Text style={styles.link}>إزالة الخبرة من خطتي</Text></Pressable></View> : null}
+              {plannedProjects.map(({ project, index }) => <View key={project} style={styles.resource}><Text style={styles.resourceTitle}>مشروع تطبيقي</Text><Text style={styles.text}>• {project}</Text><Text style={styles.progressLabel}>{relevantProjects > index ? 'ظهر دليل مرتبط في سيرتك · 100%' : 'مخطط له · 20%'}</Text><View style={styles.progressTrack}><View style={[styles.progressFill, { width: relevantProjects > index ? '100%' : '20%' }]} /></View><Pressable onPress={() => void learning.change(projectPlanId(selectedPath.id, index), false)}><Text style={styles.link}>إزالة المشروع من خطتي</Text></Pressable></View>)}
               <Text style={styles.note}>أنجزي المشروع ثم اكتبيه داخل السيرة أو الخبرات وأعيدي تحليلها؛ عندها فقط يستطيع التطبيق احتساب دليله للمسار.</Text>
               <Pressable accessibilityRole="button" onPress={() => router.push('/upload-cv')}><Text style={styles.link}>تحديث السيرة وإعادة التحليل</Text></Pressable>
             </View>
@@ -90,7 +120,7 @@ export default function LearningPlanScreen() {
         ) : null}
         {!learning.ready ? (
           !learning.error ? <Text style={styles.text}>جارٍ تحميل خطة تعلمك…</Text> : null
-        ) : skills.length === 0 ? (
+        ) : progressItems.length === 0 ? (
           <View style={styles.card}>
             <Text style={styles.heading}>خطتك فارغة حاليًا</Text>
             <Text style={styles.text}>افتح تفاصيل وظيفة، ثم خطوات التعلم المقترحة، واضغط «أضف إلى خطة تعلمي» عند المهارة التي تريد تطويرها.</Text>
@@ -106,6 +136,7 @@ export default function LearningPlanScreen() {
               return (
               <View key={skill.skill_id} style={styles.card}>
                 <Text style={styles.skill}>{displaySkillName(skill.name)}</Text>
+                {(() => { const progress = skillProgress(skill.skill_id); const row = requirements.find(item => item.skill_id === skill.skill_id); const priority = row && 'priority_rank' in row ? row.priority_rank : null; return <><Text style={styles.progressLabel}>{progress === 100 ? 'موثقة في ملفك' : progress >= 60 ? 'قيد التطبيق' : 'مبتدئ'} · {progress}%{priority ? ` · أولوية ${priority}` : ''}</Text><View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${progress}%` }]} /></View></>; })()}
                 {profileState.ready && !profileState.error && profileState.profile?.skill_ids.includes(skill.skill_id) ? <Text style={styles.note}>✓ أصبحت ضمن مهارات ملفك المعتمد. يمكنك إبقاؤها للتدريب أو إزالتها من الخطة.</Text> : null}
                 {getLearningSteps(skill.name).map((step, index) => (
                   <Text key={index} style={styles.text}>{index + 1}. {step}</Text>
@@ -212,4 +243,8 @@ const styles = StyleSheet.create({
     checkButton: { borderWidth: 1, borderColor: '#12635E', borderRadius: 12, padding: 12, minHeight: 46, justifyContent: 'center' },
     checkButtonDone: { backgroundColor: '#E5F3EE' },
     checkText: { color: '#12635E', fontSize: 15, fontWeight: '600', textAlign: 'center' },
+    progressNumber: { color: '#12635E', fontSize: 32, fontWeight: '800', textAlign: 'right' },
+    progressLabel: { color: '#12635E', fontSize: 15, fontWeight: '700', textAlign: 'right' },
+    progressTrack: { height: 10, backgroundColor: '#E2E8E3', borderRadius: 999, overflow: 'hidden' },
+    progressFill: { height: '100%', backgroundColor: '#12635E', borderRadius: 999 },
 });

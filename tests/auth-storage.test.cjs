@@ -59,6 +59,13 @@ test('guest, account A and account B never share profile or learning-plan keys',
   h.scoped.setDataOwner('account-a'); assert.deepEqual(plain((await profile.readSkillProfile()).skill_ids), [ids[2]]); assert.deepEqual(plain(await plan.readLearningPlan()), [ids[3]]);
   h.scoped.setDataOwner(null); assert.deepEqual(plain((await profile.readSkillProfile()).skill_ids), [ids[0]]); assert.deepEqual(plain(await plan.readLearningPlan()), [ids[1]]);
 });
+test('learning plans safely store skills, certifications, experience and projects', async () => {
+  const h = harness(); const plan = h.load('learning-plan.ts');
+  const entries = [ids[0], 'cert:github-foundations', 'experience:job-software-engineer:0', 'project:job-software-engineer:1'];
+  for (const entry of entries) await plan.changeLearningPlan(entry, true);
+  assert.deepEqual(plain(await plan.readLearningPlan()), entries);
+  await assert.rejects(plan.changeLearningPlan('project:../other:1', true));
+});
 test('queued saves reject after account switching instead of writing into the new account', async () => {
   const h = harness(); const profile = h.load('skill-profile.ts');
   const queued = profile.saveReviewedCv(cv(ids[0])); h.scoped.setDataOwner('account-a');

@@ -2,7 +2,7 @@ import { parsePersonalProfile, type PersonalProfile } from './personal-profile';
 import { parseSkillProfile, type SkillProfile } from './skill-profile';
 import { validReview, type CvReview } from './saved-cv.types';
 import { validateCvFile } from './cv-file';
-import dataset from '../masarak_dataset.json';
+import { isValidLearningPlanId } from './learning-plan';
 
 export type CloudCv = { path: string; name: string; size: number; mimeType: string; review: CvReview | null };
 export type CloudSnapshot = { version: 1; personal: PersonalProfile | null; skills: SkillProfile | null; plan: string[]; learningProgress: Record<string, string>; professionalCertifications: string[]; cv: CloudCv | null };
@@ -16,7 +16,7 @@ export function validCloudPath(path: string, owner: string): boolean {
 export function parseCloudSnapshot(value: unknown, owner: string): CloudSnapshot {
   if (!value || typeof value !== 'object' || JSON.stringify(value).length > 1500000) throw new Error('Invalid cloud data');
   const v = value as CloudSnapshot;
-  if (v.version !== 1 || !Array.isArray(v.plan) || v.plan.length > 942 || v.plan.some(id => typeof id !== 'string')) throw new Error('Invalid cloud plan');
+  if (v.version !== 1 || !Array.isArray(v.plan) || v.plan.length > 1200 || v.plan.some(id => typeof id !== 'string')) throw new Error('Invalid cloud plan');
   const rawProgress = (v as CloudSnapshot & { learningProgress?: unknown }).learningProgress;
   if (rawProgress !== undefined && (!rawProgress || typeof rawProgress !== 'object' || Array.isArray(rawProgress) || Object.keys(rawProgress).length > 100)) throw new Error('Invalid learning progress');
   const learningProgress: Record<string, string> = {};
@@ -27,13 +27,12 @@ export function parseCloudSnapshot(value: unknown, owner: string): CloudSnapshot
   const rawCertifications = (v as CloudSnapshot & { professionalCertifications?: unknown }).professionalCertifications;
   if (rawCertifications !== undefined && (!Array.isArray(rawCertifications) || rawCertifications.length > 50 || rawCertifications.some(id => typeof id !== 'string' || id.length > 100))) throw new Error('Invalid professional certifications');
   const professionalCertifications = [...new Set((rawCertifications ?? []) as string[])];
-  const ids = new Set(dataset.career_skills.map(row => row.skill_id));
   let cv: CloudCv | null = null;
   if (v.cv !== null) {
     if (!v.cv || typeof v.cv.path !== 'string' || !validCloudPath(v.cv.path, owner) || typeof v.cv.name !== 'string' || v.cv.name.length > 250 || typeof v.cv.mimeType !== 'string' || typeof v.cv.size !== 'number' || !Number.isFinite(v.cv.size) || v.cv.size < 1 || validateCvFile(v.cv) || (v.cv.review !== null && !validReview(v.cv.review))) throw new Error('Invalid cloud CV');
     cv = { path: v.cv.path, name: v.cv.name, size: v.cv.size, mimeType: v.cv.mimeType, review: v.cv.review };
   }
-  return { version: 1, personal: v.personal === null ? null : parsePersonalProfile(v.personal), skills: v.skills === null ? null : parseSkillProfile(v.skills), plan: [...new Set(v.plan.filter(id => ids.has(id)))], learningProgress, professionalCertifications, cv };
+  return { version: 1, personal: v.personal === null ? null : parsePersonalProfile(v.personal), skills: v.skills === null ? null : parseSkillProfile(v.skills), plan: [...new Set(v.plan.filter(isValidLearningPlanId))], learningProgress, professionalCertifications, cv };
 }
 export function parseCloudMeta(raw: string | null): CloudMeta {
   if (raw === null) return defaultCloudMeta();

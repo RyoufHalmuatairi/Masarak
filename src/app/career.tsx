@@ -12,6 +12,7 @@ import { useSkillProfile } from '../hooks/use-skill-profile';
 import { usePersonalProfile } from '../hooks/use-personal-profile';
 import { useLearningProgress } from '../hooks/use-learning-progress';
 import { useProfessionalCertifications } from '../hooks/use-professional-certifications';
+import { useLearningPlan } from '../hooks/use-learning-plan';
 import dataset from '../masarak_dataset.json';
 import { getSkillGapReport, readinessLabels, readinessLevel } from '../utils/skill-gap';
 import { certificationsByIds } from '../constants/professional-certifications';
@@ -19,6 +20,7 @@ import { calculateCareerReadiness } from '../utils/career-readiness';
 import { displaySkillName } from '../utils/skill-labels';
 import { jobPathById } from '../constants/job-paths';
 import { jobPathRequirementProfile, requirementsForCareerPath } from '../constants/job-path-requirements';
+import { certificationPlanId, experiencePlanId, projectPlanId } from '../utils/learning-plan';
 
 export default function CareerScreen() {
     const router = useRouter();
@@ -26,6 +28,7 @@ export default function CareerScreen() {
     const personalState = usePersonalProfile();
     const learningProgress = useLearningProgress();
     const certificationState = useProfessionalCertifications();
+    const learningPlan = useLearningPlan();
     const savedSkills = profile?.skill_ids ?? null;
     const cvSkills = new Set(profile?.cv?.skills.flatMap(skill => skill.mapped_skill_id && !profile.excluded_cv_skill_ids.includes(skill.mapped_skill_id) ? [skill.mapped_skill_id] : []) ?? []);
     const params = useLocalSearchParams<{ id?: string }>();
@@ -138,6 +141,7 @@ export default function CareerScreen() {
                             <Text style={styles.note}>{certificate.cost}</Text>
                             <Text style={styles.note}>{certificate.note}</Text>
                             <Pressable accessibilityRole="link" onPress={() => void Linking.openURL(certificate.url)}><Text style={styles.link}>صفحة الشهادة الرسمية</Text></Pressable>
+                            <Pressable accessibilityRole="button" disabled={!learningPlan.ready || learningPlan.busy} style={styles.certButton} onPress={() => void learningPlan.change(certificationPlanId(certificate.id), !learningPlan.plan.includes(certificationPlanId(certificate.id)))}><Text style={styles.certButtonText}>{learningPlan.plan.includes(certificationPlanId(certificate.id)) ? '✓ في خطة تعلمي — إزالة' : '＋ أضف الشهادة إلى خطة تعلمي'}</Text></Pressable>
                             <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: achieved, disabled: !certificationState.ready || certificationState.busy }} disabled={!certificationState.ready || certificationState.busy} style={[styles.certButton, achieved && styles.certButtonDone]} onPress={() => void certificationState.change(certificate.id, !achieved)}><Text style={styles.certButtonText}>{achieved ? '✓ حصلت على هذه الشهادة' : '□ حصلت على هذه الشهادة'}</Text></Pressable>
                         </View>;
                     })}
@@ -150,8 +154,9 @@ export default function CareerScreen() {
                         <Text style={styles.note}>{roleProfile.education}</Text>
                         <Text style={styles.skillName}>الخبرة العملية</Text>
                         <Text style={styles.note}>{roleProfile.experience}</Text>
+                        <Pressable accessibilityRole="button" disabled={!learningPlan.ready || learningPlan.busy} style={styles.certButton} onPress={() => void learningPlan.change(experiencePlanId(career.id), !learningPlan.plan.includes(experiencePlanId(career.id)))}><Text style={styles.certButtonText}>{learningPlan.plan.includes(experiencePlanId(career.id)) ? '✓ الخبرة في خطتي — إزالة' : '＋ أضف الخبرة المطلوبة إلى خطتي'}</Text></Pressable>
                         <Text style={styles.skillName}>مشاريع تثبت الجاهزية</Text>
-                        {roleProfile.projects.map(project => <Text key={project} style={styles.note}>• {project}</Text>)}
+                        {roleProfile.projects.map((project, index) => <View key={project} style={styles.certificate}><Text style={styles.note}>• {project}</Text><Pressable accessibilityRole="button" disabled={!learningPlan.ready || learningPlan.busy} style={styles.certButton} onPress={() => void learningPlan.change(projectPlanId(career.id, index), !learningPlan.plan.includes(projectPlanId(career.id, index)))}><Text style={styles.certButtonText}>{learningPlan.plan.includes(projectPlanId(career.id, index)) ? '✓ المشروع في خطتي — إزالة' : '＋ أضف المشروع إلى خطتي'}</Text></Pressable></View>)}
                         <Text style={styles.skillName}>الشهادة المهنية</Text>
                         <Text style={styles.note}>{roleCertifications.length ? 'اختيارية ومساندة. اختاري واحدة مرتبطة بالأداة أو البيئة التي تستهدفينها؛ لا يلزم جمعها كلها.' : 'لا توجد شهادة مهنية عامة ذات أولوية لهذا المسمى في مرحلة الخريج؛ المشروع العملي أقوى.'}</Text>
                         {roleProfile.sources.map(source => (
@@ -197,6 +202,7 @@ export default function CareerScreen() {
                                         <Text style={styles.english}>
                                             {skill?.description ?? 'الوصف غير متوفر'}
                                         </Text>
+                                        {!savedSkills?.includes(item.skill_id) ? <Pressable accessibilityRole="button" disabled={!learningPlan.ready || learningPlan.busy} style={styles.certButton} onPress={() => void learningPlan.change(item.skill_id, !learningPlan.plan.includes(item.skill_id))}><Text style={styles.certButtonText}>{learningPlan.plan.includes(item.skill_id) ? '✓ المهارة في خطتي — إزالة' : '＋ أضف المهارة إلى خطة تعلمي'}</Text></Pressable> : null}
                                         <Pressable
                                             accessibilityRole="link"
                                             onPress={() => {
