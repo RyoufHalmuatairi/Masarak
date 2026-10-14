@@ -8,3 +8,9 @@ Confirm email when creating an account using a six-digit code instead of a confi
 **Why:** The user explicitly selected confirmation when creating an account rather than either every-login alternative.
 
 **How to apply:** Preserve this distinction in account flows and hosted email templates. A template in the repository is not evidence that the hosted provider sends codes; verify the hosted configuration and actual delivery separately.
+
+Treat the hosted dashboard's configuration restrictions as authoritative rather than assuming that general provider documentation lists all prerequisites.
+
+**Why:** The user's Supabase dashboard blocked editing the confirmation template until Custom SMTP was configured, although the general template documentation described editing without emphasizing that prerequisite.
+
+**How to apply:** Check prerequisites before asking the user to edit hosted templates. Do not mistake this restriction for a required paid Supabase upgrade or work around it by disabling email confirmation.
