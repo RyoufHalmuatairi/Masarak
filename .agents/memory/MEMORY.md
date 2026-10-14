@@ -1,0 +1,1 @@
+- [Import intent](import-intent.md) — User imported Masarak for experimentation and modifications, not a stack migration.
