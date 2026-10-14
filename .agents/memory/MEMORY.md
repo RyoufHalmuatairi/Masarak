@@ -1,1 +1,2 @@
 - [Project scope and target](import-intent.md) — Complete the report scope for iOS and Android, test it, and only then consider it ready to publish.
+- [Account confirmation scope](account-confirmation.md) — Six-digit email code confirms new accounts only; ordinary login remains password-based.
