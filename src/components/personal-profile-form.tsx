@@ -1,0 +1,80 @@
+import { useCallback, useRef, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
+import { colors, ui } from '../constants/design';
+import { useAuth } from '../contexts/auth-context';
+import { emptyPersonalProfile, readPersonalProfile, savePersonalProfile, type PersonalProfile } from '../utils/personal-profile';
+import { readSkillProfile } from '../utils/skill-profile';
+import { careerTitles } from '../utils/career-matches';
+import dataset from '../masarak_dataset.json';
+
+const splitList = (text: string) => [...new Set(text.split(/[,،;؛\n]/).map(item => item.trim()).filter(Boolean))];
+export function PersonalProfileForm() {
+  const auth = useAuth();
+  const accountName = typeof auth.session?.user.user_metadata?.display_name === 'string' ? auth.session.user.user_metadata.display_name.slice(0, 80) : '';
+  const [profile, setProfile] = useState<PersonalProfile>(emptyPersonalProfile);
+  const [interests, setInterests] = useState(''); const [traits, setTraits] = useState('');
+  const [ready, setReady] = useState(false); const [editing, setEditing] = useState(false);
+  const [busy, setBusy] = useState(false); const [message, setMessage] = useState(''); const [error, setError] = useState('');
+  const locked = useRef(false); const active = useRef(true);
+  useFocusEffect(useCallback(() => {
+    active.current = true; setReady(false);
+    void readPersonalProfile().then(value => {
+      if (!active.current) return;
+      const initial = value ?? { ...emptyPersonalProfile(), name: accountName };
+      setProfile(initial); setInterests(initial.interests.join('، ')); setTraits(initial.traits.join('، ')); setError('');
+    }).catch(() => { if (active.current) setError('تعذر قراءة الملف. أعد فتح الصفحة قبل تعديل بياناته.'); }).finally(() => { if (active.current) setReady(true); });
+    return () => { active.current = false; };
+  }, [accountName]));
+  async function save() {
+    if (locked.current) return;
+    locked.current = true; setBusy(true); setError(''); setMessage('');
+    try {
+      const lists = { interests: splitList(interests), traits: splitList(traits) };
+      if (Object.values(lists).some(list => list.length > 30 || list.some(value => value.length > 100))) throw new Error('اكتب حتى 30 اهتمامًا أو سمة، وبحد 100 حرف لكل عنصر.');
+      const value = await savePersonalProfile({ ...profile, ...lists });
+      if (active.current) { setProfile(value); setEditing(false); setMessage('حُفظت بيانات ملفك على الجهاز. حالة الحفظ السحابي تظهر أدناه.'); }
+    } catch (failure) { if (active.current) setError(failure instanceof Error && failure.message.startsWith('اكتب') ? failure.message : 'تعذر حفظ الملف. بياناتك السابقة باقية؛ حاول مجددًا.'); }
+    finally { locked.current = false; if (active.current) setBusy(false); }
+  }
+  async function importEducation() {
+    setError('');
+    try {
+      const saved = await readSkillProfile(); const degree = saved?.cv?.education?.[0];
+      if (!active.current) return;
+      if (!degree) { setError('اعتمد معلومات التعليم من السيرة أولًا، أو أدخلها هنا.'); return; }
+      setProfile(p => ({ ...p, education: degree.name.slice(0, 300), institution: degree.organization.slice(0, 300), studyStatus: degree.description.slice(0, 300), studyDates: degree.dates.slice(0, 300) }));
+      setMessage('نُقل أول مؤهل من سيرتك المعتمدة. راجع الحقول ثم احفظها.');
+    } catch { if (active.current) setError('تعذر قراءة تعليم السيرة. يمكنك إدخاله يدويًا.'); }
+  }
+  const fields: { key: 'name' | 'major' | 'institution' | 'education' | 'studyStatus' | 'studyDates'; label: string; placeholder: string }[] = [
+    { key: 'name', label: 'اسمك', placeholder: 'الاسم الذي يظهر في ملفك' },
+    { key: 'major', label: 'التخصص', placeholder: 'مثل علوم الحاسب' },
+    { key: 'institution', label: 'الجامعة أو الجهة التعليمية', placeholder: 'اسم الجهة' },
+    { key: 'education', label: 'المؤهل الدراسي', placeholder: 'مثل بكالوريوس علوم الحاسب' },
+    { key: 'studyStatus', label: 'حالة الدراسة', placeholder: 'مثل أدرس حاليًا أو متخرج' },
+    { key: 'studyDates', label: 'فترة الدراسة', placeholder: 'الفترة كما وردت في سيرتك' },
+  ];
+  return <View style={ui.card}>
+    <Text style={ui.heading}>بياناتي وتعليمي واهتماماتي</Text>
+    {!ready ? <ActivityIndicator color={colors.primary} /> : editing ? <>
+      {fields.map(field => <View key={field.key} style={{ gap: 7 }}><Text style={ui.note}>{field.label}</Text><TextInput accessibilityLabel={field.label} maxLength={field.key === 'name' ? 80 : 300} editable={!busy} style={ui.input} placeholderTextColor={colors.muted} placeholder={field.placeholder} value={profile[field.key]} onChangeText={value => setProfile(p => ({ ...p, [field.key]: value }))} /></View>)}
+      <Pressable disabled={busy} accessibilityRole="button" onPress={() => void importEducation()}><Text style={ui.link}>نسخ أول مؤهل من السيرة المعتمدة</Text></Pressable>
+      <Text style={ui.note}>اهتماماتك — افصل بينها بفاصلة</Text><TextInput accessibilityLabel="اهتماماتي" editable={!busy} multiline maxLength={3100} style={ui.input} placeholder="مثل الأمن السيبراني، تطوير التطبيقات" placeholderTextColor={colors.muted} value={interests} onChangeText={setInterests} />
+      <Text style={ui.note}>سماتك الشخصية — افصل بينها بفاصلة</Text><TextInput accessibilityLabel="سماتي الشخصية" editable={!busy} multiline maxLength={3100} style={ui.input} placeholder="مثل التحليل، التعاون، الفضول" placeholderTextColor={colors.muted} value={traits} onChangeText={setTraits} />
+      <Text style={ui.note}>هدفك المهني اختياري؛ يمكنك استكشاف المسارات دون تحديده.</Text>
+      {[{ id: null, title: 'لم أحدد هدفًا بعد' }, ...dataset.careers.map(career => ({ id: career.career_id, title: careerTitles[career.career_id] ?? career.title }))].map(career => <Pressable key={career.id ?? 'none'} disabled={busy} accessibilityRole="radio" accessibilityState={{ selected: profile.careerGoal === career.id }} style={[ui.outline, profile.careerGoal === career.id && { backgroundColor: colors.mint }]} onPress={() => setProfile(p => ({ ...p, careerGoal: career.id }))}><Text style={ui.outlineText}>{profile.careerGoal === career.id ? '✓ ' : ''}{career.title}</Text></Pressable>)}
+      <Pressable disabled={busy} accessibilityRole="button" style={ui.button} onPress={() => void save()}><Text style={ui.buttonText}>{busy ? 'جارٍ الحفظ…' : 'حفظ بيانات الملف'}</Text></Pressable>
+      <Pressable disabled={busy} accessibilityRole="button" onPress={() => setEditing(false)}><Text style={ui.link}>إغلاق التعديل دون حفظ</Text></Pressable>
+    </> : <>
+      <Text style={ui.text}>{[profile.name, profile.major, profile.institution, profile.education, profile.studyStatus, profile.studyDates].filter(Boolean).join(' · ') || 'أضف تعليمك واهتماماتك لبناء ملفك المهني.'}</Text>
+      {profile.interests.length > 0 && <Text style={ui.text}>اهتماماتي: {profile.interests.join('، ')}</Text>}
+      {profile.traits.length > 0 && <Text style={ui.text}>سماتي: {profile.traits.join('، ')}</Text>}
+      {!!profile.careerGoal && <Text style={ui.text}>هدفي: {careerTitles[profile.careerGoal]}</Text>}
+      <Text style={ui.note}>هذه البيانات محفوظة في ملفك. إدخالها لا يغيّر نسبة تغطية المهارات الأساسية الحالية؛ التوصية الموزونة خطوة لاحقة.</Text>
+      <Pressable accessibilityRole="button" style={ui.outline} onPress={() => { setMessage(''); setEditing(true); }}><Text style={ui.outlineText}>تعديل بياناتي</Text></Pressable>
+    </>}
+    {!!message && <Text style={ui.note}>{message}</Text>}
+    {!!error && <Text accessibilityRole="alert" style={[ui.text, { color: colors.error }]}>{error}</Text>}
+  </View>;
+}

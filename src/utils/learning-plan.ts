@@ -1,7 +1,8 @@
 import AsyncStorage, { captureDataScope } from './scoped-storage';
 import dataset from '../masarak_dataset.json';
 
-const key = 'masarak-learning-plan-v1';
+export const LEARNING_PLAN_KEY = 'masarak-learning-plan-v1';
+const key = LEARNING_PLAN_KEY;
 const validIds = new Set(dataset.career_skills.map((item) => item.skill_id));
 let pending: Promise<unknown> = Promise.resolve();
 
