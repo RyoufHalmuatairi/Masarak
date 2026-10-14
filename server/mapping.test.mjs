@@ -20,7 +20,7 @@ test('Linux, Bash and encryption map to their actual foundations rather than net
   assert.equal(match('Python certificate'), null);
   assert.equal(match('Python expert at managing enterprise networks'), null);
 });
-test('all canonical skills are recognized even when they are outside the six role subsets', () => {
+test('all canonical skills are recognized even when they are outside the role subsets', () => {
   for (const skill of data.skills) assert.equal(match(skill.name), skill.skill_id);
 });
 test('an ambiguous alias is never silently assigned', () => {
@@ -43,7 +43,7 @@ test('data references resolve and aliases do not produce extra counted core requ
   for (const row of data.career_skills) assert.ok(ids.has(row.skill_id));
   for (const role of data.careers) {
     const core = data.career_skills.filter(row => row.career_id === role.career_id && row.priority === 'core');
-    assert.equal(core.length, role.career_id === 'C01' ? 7 : 6);
+    assert.ok(core.length >= 6 && core.length <= 8);
     assert.equal(new Set(core.map(row => row.skill_id)).size, core.length);
   }
   assert.equal(new Set(['Java', 'Python', 'C++'].map(match)).size, 1);

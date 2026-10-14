@@ -21,10 +21,13 @@ import { calculateCareerReadiness } from '../utils/career-readiness';
 const titles: Record<string, string> = {
     C01: 'مهندس برمجيات',
     C02: 'محلل بيانات',
-    C03: 'عالم بيانات وذكاء اصطناعي',
-    C04: 'مهندس ذكاء اصطناعي وتعلم آلة',
+    C03: 'عالم بيانات',
+    C04: 'مهندس ذكاء اصطناعي وتعلّم آلي',
     C05: 'محلل أمن سيبراني',
     C06: 'مهندس شبكات',
+    C07: 'مهندس بيانات',
+    C08: 'مهندس سحابة وDevOps',
+    C09: 'محلل نظم أعمال',
 };
 
 export default function CareerScreen() {
@@ -121,6 +124,7 @@ export default function CareerScreen() {
                                 ['الدورات المكتملة', readiness.breakdown.learning, readiness.weights.learning],
                             ] as const).map(([label, earned, maximum]) => <View key={label} style={styles.breakdown}><Text style={styles.note}>{label}</Text><Text style={styles.points}>{earned} / {maximum}</Text></View>)}
                             <Text style={styles.note}>وثّقت {gap.matchedCore.length} من {gap.matchedCore.length + gap.missingCore.length} مهارة أساسية. الدورات والشهادات المعلّمة مكتملة ذاتيًا، وتحتاج مستندًا عند التقديم الفعلي.</Text>
+                            <Text style={styles.note}>احتسبنا للمسار {readiness.evidence.projects} من {readiness.evidence.totalProjects} مشاريع، و{readiness.evidence.experiences} من {readiness.evidence.totalExperiences} خبرات؛ لأن الحسبة تقبل الدليل المرتبط بكلمات ومهام هذا المسار فقط.</Text>
 
                             {gap.missingCore.length > 0 && (
                                 <>
@@ -138,7 +142,7 @@ export default function CareerScreen() {
 
                 <View style={styles.card}>
                     <Text style={styles.heading}>الشهادات المهنية المقترحة</Text>
-                    <Text style={styles.note}>اختر «حصلت عليها» فقط بعد اجتياز الاختبار وصدور الشهادة باسمك. التحضير أو إكمال دورة لا يعني الحصول على الشهادة.</Text>
+                    <Text style={styles.note}>هذه خيارات بديلة؛ تكفي شهادة واحدة مرتبطة بالمسار لنقاط الشهادات. اختر «حصلت عليها» فقط بعد اجتياز الاختبار وصدور الشهادة باسمك. التحضير أو إكمال دورة لا يعني الحصول على الشهادة.</Text>
                     {certificationState.error ? <Pressable onPress={() => void certificationState.reload()}><Text style={styles.link}>{certificationState.error} اضغط لإعادة التحميل.</Text></Pressable> : null}
                     {roleCertifications.map(certificate => {
                         const achieved = certificationState.achieved.includes(certificate.id);
@@ -160,6 +164,8 @@ export default function CareerScreen() {
                         <Text style={styles.note}>{roleProfile.education}</Text>
                         <Text style={styles.skillName}>الخبرة العملية</Text>
                         <Text style={styles.note}>{roleProfile.experience}</Text>
+                        <Text style={styles.skillName}>مشاريع تثبت الجاهزية</Text>
+                        {roleProfile.projects.map(project => <Text key={project} style={styles.note}>• {project}</Text>)}
                         <Text style={styles.skillName}>الشهادات المهنية</Text>
                         <Text style={styles.note}>{roleProfile.certifications}</Text>
                         {roleProfile.sources.map(source => (
@@ -167,7 +173,7 @@ export default function CareerScreen() {
                                 <Text style={styles.link}>{source.label}</Text>
                             </Pressable>
                         ))}
-                        <Text style={styles.note}>هذه معلومات إرشادية عامة. إعلان الوظيفة المستهدف هو المرجع النهائي، ولا تدخل الشهادة أو سنوات الخبرة في نسبة تغطية المهارات الحالية.</Text>
+                        <Text style={styles.note}>هذه معلومات إرشادية عامة، وإعلان الوظيفة المستهدف هو المرجع النهائي. الشهادة والدليل العملي يدخلان في الجاهزية المركبة كبندين منفصلين، ولا يغيران نسبة تغطية المهارات الأساسية.</Text>
                     </View>
                 ) : null}
 

@@ -8,6 +8,7 @@ const ts = require(path.join(root, 'node_modules/typescript'));
 const dataset = JSON.parse(fs.readFileSync(path.join(root, 'src/masarak_dataset.json'), 'utf8'));
 const resourcesCode = fs.readFileSync(path.join(root, 'src/constants/learning-resources.ts'), 'utf8');
 const certificationsCode = fs.readFileSync(path.join(root, 'src/constants/professional-certifications.ts'), 'utf8');
+const profilesCode = fs.readFileSync(path.join(root, 'src/constants/career-profiles.ts'), 'utf8');
 
 function moduleFrom(code, requireModule = require) {
   const exports = {};
@@ -17,6 +18,7 @@ function moduleFrom(code, requireModule = require) {
 }
 const resources = moduleFrom(resourcesCode);
 const certifications = moduleFrom(certificationsCode);
+const profiles = moduleFrom(profilesCode);
 const careerScore = moduleFrom(fs.readFileSync(path.join(root, 'src/utils/career-score.ts'), 'utf8'), name => {
   if (name.endsWith('masarak_dataset.json')) return dataset;
   throw Error(name);
@@ -25,6 +27,7 @@ const readiness = moduleFrom(fs.readFileSync(path.join(root, 'src/utils/career-r
   if (name.endsWith('masarak_dataset.json')) return dataset;
   if (name.includes('professional-certifications')) return certifications;
   if (name.includes('learning-resources')) return resources;
+  if (name.includes('career-profiles')) return profiles;
   if (name === './career-score') return careerScore;
   return {};
 });
@@ -41,7 +44,7 @@ test('software readiness separates skills, practical evidence, GPA, learning and
   const firstCore = coreIds[0];
   const resource = resources.learningResources.find(item => item.skillIds.includes(firstCore));
   const result = readiness.calculateCareerReadiness('C01', {
-    skillProfile: { skill_ids: coreIds, cv: { projects: [{}, {}], experiences: [{}] } },
+    skillProfile: { skill_ids: coreIds, cv: { projects: [{ name: 'Software API application' }, { description: 'Backend software testing' }], experiences: [{ role: 'Software developer' }] } },
     personal: { education: 'Bachelor', major: 'Computer Science', gpa: 5, gpaScale: 5 },
     learningProgress: resource ? { [resource.id]: '2026-10-14T10:00:00.000Z' } : {},
     professionalCertifications: ['github-foundations'],
@@ -51,6 +54,28 @@ test('software readiness separates skills, practical evidence, GPA, learning and
   assert.equal(result.breakdown.academic, 10);
   assert.equal(result.breakdown.certifications, 5);
   assert.ok(result.breakdown.learning > 0 && result.breakdown.learning <= 5);
+});
+
+test('practical evidence is counted only for the matching career', () => {
+  const softwareIds = dataset.career_skills.filter(row => row.career_id === 'C01' && row.priority === 'core').map(row => row.skill_id);
+  const skillProfile = { skill_ids: softwareIds, cv: { projects: [{ name: 'Backend software API' }], experiences: [] } };
+  const software = readiness.calculateCareerReadiness('C01', { ...empty, skillProfile });
+  const cyber = readiness.calculateCareerReadiness('C05', { ...empty, skillProfile });
+  assert.ok(software.breakdown.practical > 0);
+  assert.equal(cyber.breakdown.practical, 0);
+});
+
+test('new careers have complete weights and core skills', () => {
+  for (const id of ['C07', 'C08', 'C09']) {
+    assert.equal(Object.values(readiness.readinessWeights[id]).reduce((sum, value) => sum + value, 0), 100);
+    assert.ok(dataset.career_skills.some(row => row.career_id === id && row.priority === 'core'));
+  }
+});
+
+test('one role certification earns the certificate component when alternatives exist', () => {
+  const result = readiness.calculateCareerReadiness('C07', { ...empty, professionalCertifications: ['microsoft-dp-700'] });
+  assert.equal(result.breakdown.certifications, readiness.readinessWeights.C07.certifications);
+  assert.ok(result.evidence.totalCertifications > 1);
 });
 
 test('role weights make the selected networking certification more influential than the software certification', () => {
