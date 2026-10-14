@@ -1,1 +1,1 @@
-- [Import intent](import-intent.md) — User imported Masarak for experimentation and modifications, not a stack migration.
+- [Project scope and target](import-intent.md) — Complete the report scope for iOS and Android, test it, and only then consider it ready to publish.
