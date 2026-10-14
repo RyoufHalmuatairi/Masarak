@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>تقرير حالة مشروع مسارك وملاحظات الأمان</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #173a39;
+      --muted: #526867;
+      --line: #d9e5df;
+      --paper: #ffffff;
+      --wash: #f3f7f3;
+      --green: #17695f;
+      --green-bg: #e5f4ed;
+      --amber: #875600;
+      --amber-bg: #fff2d8;
+      --red: #a43a3a;
+      --red-bg: #ffeded;
+      --blue: #285c82;
+      --blue-bg: #eaf3fa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--wash);
+      color: var(--ink);
+      font-family: Tahoma, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.9;
+    }
+    main { width: min(980px, 100%); margin: 0 auto; padding: 34px 22px 54px; }
+    header {
+      padding: 34px 36px;
+      border-radius: 22px;
+      color: white;
+      background: linear-gradient(125deg, #164e4b, #278274);
+      box-shadow: 0 10px 30px #173a3918;
+    }
+    header .tag { margin: 0 0 8px; color: #d4ede5; font-size: 13px; }
+    h1 { margin: 0; font-size: 30px; line-height: 1.5; }
+    header p:last-child { margin: 10px 0 0; color: #e5f4ef; }
+    section, .callout {
+      margin-top: 20px;
+      padding: 24px 26px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--paper);
+    }
+    h2 { margin: 0 0 14px; font-size: 21px; }
+    h3 { margin: 18px 0 8px; font-size: 16px; }
+    p { margin: 8px 0; }
+    ul, ol { margin: 8px 0; padding-right: 23px; }
+    li { margin: 5px 0; }
+    .summary { font-size: 17px; }
+    .badge {
+      display: inline-block;
+      min-width: 94px;
+      padding: 2px 9px;
+      border-radius: 99px;
+      text-align: center;
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .done { color: var(--green); background: var(--green-bg); }
+    .partial { color: var(--amber); background: var(--amber-bg); }
+    .missing { color: var(--red); background: var(--red-bg); }
+    .note { color: var(--muted); font-size: 13px; }
+    .callout { border-right: 5px solid #d59b31; background: #fffaf0; }
+    .callout strong { color: #724800; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { padding: 11px 10px; border-bottom: 1px solid var(--line); text-align: right; vertical-align: top; }
+    th { background: #f4f8f5; font-size: 13px; }
+    td:first-child { width: 24%; font-weight: 700; }
+    td:nth-child(2) { width: 18%; }
+    .security-good { border-right: 5px solid #2b8b6b; }
+    .security-alert { border-right: 5px solid #bd5656; }
+    .priority { color: var(--blue); background: var(--blue-bg); border-radius: 8px; padding: 1px 7px; font-size: 12px; font-weight: bold; }
+    .sources { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 13px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 640px) {
+      main { padding: 16px 12px 32px; }
+      header, section, .callout { padding: 20px 17px; }
+      h1 { font-size: 24px; }
+      section { overflow-x: auto; }
+      table { min-width: 640px; }
+    }
+    @media print {
+      @page { size: A4; margin: 15mm; }
+      body { background: white; font-size: 11pt; }
+      main { width: 100%; padding: 0; }
+      header, section, .callout { box-shadow: none; break-inside: avoid; }
+      header { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      th, .badge, .callout { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      h2, h3 { break-after: avoid; }
+      tr { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="tag">مراجعة مقارنة بين تقرير المشروع والنسخة البرمجية الحالية</p>
+    <h1>حالة مشروع مسارك<br>المنجز، المتبقي، وأولويات الأمان</h1>
+    <p>ملخص عملي للفريق قبل تحديد الخطوات التالية.</p>
+  </header>
+
+  <div class="callout summary">
+    <strong>الخلاصة:</strong>
+    توجد نسخة أولية تعمل لعرض المسارات، ومقارنة المهارات، وإظهار فجوات التعلم وحفظ بعض البيانات محليًا.
+    لكنها ليست النظام الكامل الموصوف في التقرير: تسجيل الحسابات والتحليل بالذكاء الاصطناعي غير مفعّلين الآن،
+    ولا يوجد ربط فعلي بقاعدة بيانات أو بيانات وظائف مباشرة أو محاكاة مقابلات.
+  </div>
+
+  <section>
+    <h2>ما الذي أُنجز؟</h2>
+    <table>
+      <thead><tr><th>الميزة</th><th>الحالة</th><th>ما هو موجود فعليًا</th></tr></thead>
+      <tbody>
+        <tr><td>واجهة التطبيق</td><td><span class="badge done">منجز كنموذج أولي</span></td><td>تطبيق Expo وReact Native بواجهة عربية، وشاشات رئيسية للملف والمهارات والمسارات والخطة والسيرة الذاتية.</td></tr>
+        <tr><td>المسارات والتوصية</td><td><span class="badge done">منجز مبدئيًا</span></td><td>مطابقة وحساب تغطية المهارات باستخدام بيانات ثابتة داخل المشروع لستة مسارات تقنية. ليست توصية مبنية على وظائف سوق متجددة.</td></tr>
+        <tr><td>فجوات المهارات</td><td><span class="badge done">منجز مبدئيًا</span></td><td>عرض المهارات الأساسية المتوفرة والناقصة للمسار. النسبة الحالية هي تغطية مهارات، وليست قياسًا للإتقان أو ضمانًا للجاهزية الوظيفية.</td></tr>
+        <tr><td>خطة التعلم</td><td><span class="badge partial">منجز جزئيًا</span></td><td>اقتراح مهارات لإضافتها إلى خطة محلية. لا توجد حتى الآن مكتبة مكتملة لدورات وشهادات وروابط تعلم موثقة من مصادر خارجية.</td></tr>
+        <tr><td>رفع وتحليل السيرة</td><td><span class="badge partial">الكود موجود، الخدمة غير مفعّلة</span></td><td>يوجد مسار لتحليل PDF وDOCX بخدمة Groq ومراجعة النتائج وحفظها محليًا. لكن مفتاح الخدمة والخادم غير مهيئين للتشغيل الحالي؛ وملفات PDF المصورة التي تحتاج OCR غير مدعومة.</td></tr>
+        <tr><td>تسجيل الدخول والحسابات</td><td><span class="badge partial">الواجهة والكود موجودان، غير مفعّلين</span></td><td>توجد شاشات ومنطق للمصادقة عبر Supabase، لكن إعدادات Supabase غير مضافة. لذلك لا يوجد تسجيل أو مزامنة سحابية فعالة الآن.</td></tr>
+        <tr><td>الحفظ الحالي</td><td><span class="badge done">محلي فقط</span></td><td>بعض الملف والخطة تحفظ على الجهاز أو في قاعدة المتصفح. لا تنتقل تلقائيًا بين الأجهزة، ولا تحفظ في PostgreSQL حاليًا.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>ما الذي لم يُنفّذ بعد من فكرة التقرير؟</h2>
+    <table>
+      <thead><tr><th>المتطلب في التقرير</th><th>الحالة</th><th>المتبقي</th></tr></thead>
+      <tbody>
+        <tr><td>وظائف ومتطلبات سوق العمل</td><td><span class="badge missing">غير موجود</span></td><td>جمع بيانات الوظائف، وتحديد مصدر مسموح وموثوق، وتحديثها دوريًا، واستخراج المهارات المطلوبة وربطها بالمسارات.</td></tr>
+        <tr><td>اتجاهات السوق ولوحة المؤشرات</td><td><span class="badge missing">غير موجود</span></td><td>تحليل بيانات وظائف كافية وعرض المهارات والاتجاهات بوضوح مع تاريخ المصدر وحدود العينة.</td></tr>
+        <tr><td>محاكاة المقابلة وتقييم الإجابات</td><td><span class="badge missing">غير موجود</span></td><td>أسئلة تقنية وسلوكية متكيفة مع المسار، استقبال إجابات المستخدم، ومعايير تقييم وتغذية راجعة.</td></tr>
+        <tr><td>قاعدة البيانات السحابية</td><td><span class="badge missing">التصميم فقط</span></td><td>إنشاء الجداول والعلاقات، وربط ملفات المستخدمين ونتائجهم بحساباتهم، وتطبيق صلاحيات وصول واختبارات أمنية.</td></tr>
+        <tr><td>لوحة الإدارة</td><td><span class="badge missing">غير موجود</span></td><td>تحديد دور المشرف وصلاحياته، ثم إدارة البيانات والمصادر ومراقبة الاستخدام دون إتاحة بيانات المستخدمين بلا داعٍ.</td></tr>
+        <tr><td>تقييم جودة النظام</td><td><span class="badge partial">اختبارات محدودة</span></td><td>قياس دقة استخراج المهارات والتوصيات، وتجربة استخدام منظمة، وتوثيق النتائج والقيود. وجود اختبارات لبعض الوحدات لا يثبت اكتمال هذا التقييم.</td></tr>
+      </tbody>
+    </table>
+    <p class="note">ملاحظة تقنية: التقرير يذكر Python للخادم؛ النسخة البرمجية الحالية تستخدم TypeScript في التطبيق وJavaScript/Node.js لخادم التحليل. وفيها اتصال مبرمج بـSupabase للمصادقة، لا قاعدة بيانات مستخدمين متكاملة.</p>
+  </section>
+
+  <section class="security-good">
+    <h2>إجراءات حماية موجودة حاليًا</h2>
+    <ul>
+      <li>موافقة صريحة قبل إرسال نص السيرة إلى Groq، مع تنبيه للمستخدم بأن النص يرسل للخدمة الخارجية.</li>
+      <li>الخادم لا يحفظ نسخة السيرة ولا يسجل محتواها بحسب الكود والتوثيق الحاليين.</li>
+      <li>هناك حد لحجم الملف، وعدد صفحات PDF، وطول النص، مع قبول PDF وDOCX فقط والتحقق من محتوى الملف.</li>
+      <li>تُراجع مخرجات التحليل مقابل نص السيرة وتُعرض للمستخدم للمراجعة بدل اعتمادها كحقائق مؤكدة.</li>
+      <li>تُحفظ السيرة وبياناتها محليًا، مع خيار حذف السيرة المحفوظة من التطبيق.</li>
+    </ul>
+  </section>
+
+  <section class="security-alert">
+    <h2>نقاط أمان يجب معالجتها قبل استخدام بيانات حقيقية أو النشر العام</h2>
+    <ol>
+      <li><span class="priority">أولوية قصوى</span> <strong>لا تنشروا خادم تحليل السيرة للعامة بصورته الحالية.</strong> الخادم لا يطلب تسجيل دخول ولا يربط الطلب بحساب مستخدم. حدّ الطلبات الموجود مؤقت وذاكرته محلية، ولا يحل محل التحقق من الهوية. إعداد CORS وحده ليس حماية من الاستخدام غير المصرح.</li>
+      <li><span class="priority">أولوية قصوى</span> عند تفعيل Supabase، فعّلوا سياسات RLS على كل جدول بحيث لا يرى المستخدم إلا سجلاته. لا تضعوا مفتاح الخدمة السري (service role) في التطبيق؛ المفتاح العام لا يغني عن RLS.</li>
+      <li><span class="priority">أولوية قصوى</span> احفظوا مفتاح Groq في أسرار الخادم فقط، ولا تضعوه في التطبيق أو متغير يبدأ بـ <span dir="ltr">EXPO_PUBLIC_</span> أو في Git. لا ترفعوا سيرًا حقيقية قبل مراجعة سياسة الخصوصية وشروط مشاركة البيانات مع الخدمة الخارجية.</li>
+      <li><span class="priority">قبل التجربة</span> استخدموا اتصال HTTPS من متصفح التطبيق إلى الخادم. المسار الموجود يفترض خادمًا محليًا على المنفذ 3001، وهذا لا يناسب صفحة Replit الآمنة مباشرة. يلزم ربط آمن من نفس النطاق قبل تجربة التحليل من المتصفح.</li>
+      <li><span class="priority">قبل التخزين السحابي</span> حدّدوا مدة الاحتفاظ بالسيرة، والغرض من جمع كل حقل، وآلية حذف الحساب وبياناته والملفات. اشرحوا بوضوح ما يُرسل إلى مزودي الخدمات الخارجية ومن يستطيع الوصول إليه، وراجعوا متطلبات الخصوصية المعمول بها مع الجامعة والجهة القانونية المختصة.</li>
+      <li><span class="priority">قبل الإطلاق</span> أضيفوا حماية من الإساءة: حدود طلبات موزعة، مهلة معالجة، مراقبة أخطاء بلا بيانات شخصية، وعزل معالجة الملفات وتحديث مكتبات PDF وDOCX. القيود الحالية مفيدة لكنها لا تكفي وحدها ضد الضغط أو الملفات المصممة للإضرار.</li>
+      <li><span class="priority">دائمًا</span> اعتبروا السيرة ومدخلات المستخدم نصًا غير موثوق. يجب ألا تتحول تعليمات داخل الملف إلى أوامر للنموذج أو للنظام. راجعوا مخرجات الذكاء الاصطناعي ولا تعرضوا نسبة التغطية كحكم قطعي على قبول وظيفي أو إتقان.</li>
+    </ol>
+    <p><strong>للتجربة الآن:</strong> استخدموا حسابًا تجريبيًا وسيرة وهمية، ولا تشاركوا بيانات شخصية حقيقية مع النموذج قبل اتخاذ قرار واعٍ بشأن الخصوصية.</p>
+  </section>
+
+  <section>
+    <h2>ترتيب عملي مقترح للخطوات القادمة</h2>
+    <ol>
+      <li><strong>تحديد نسخة العرض المطلوبة:</strong> هل المطلوب الآن عرض جامعي يعمل دون حساب، أم تجربة مستخدمين بحسابات، أم استكمال جميع وظائف التقرير؟</li>
+      <li><strong>تثبيت النطاق والأولوية:</strong> الاتفاق على ما يدخل في النسخة النهائية، خصوصًا مصدر وظائف السوق ومحاكاة المقابلات، قبل توسيع البرمجة.</li>
+      <li><strong>إغلاق أساس الأمان والبيانات:</strong> سياسة الخصوصية والموافقة، طريقة الحسابات، قاعدة البيانات وصلاحيات RLS، وربط الخادم الآمن.</li>
+      <li><strong>تنفيذ الميزات الناقصة تدريجيًا:</strong> بحسب الأولوية والوقت، ثم اختبارها مع مستخدمين وتوثيق نتائج التقييم والقيود.</li>
+    </ol>
+  </section>
+
+  <p class="sources">أساس هذه المراجعة: تقرير المشروع المرفق وملفات التطبيق والخادم الموجودة في النسخة الحالية. هذا تقرير مطابقة أولية وليس اختبار اختراق أو اعتمادًا قانونيًا؛ ينبغي إجراء مراجعة أمنية متخصصة قبل النشر العام.</p>
+</main>
+</body>
+</html>
