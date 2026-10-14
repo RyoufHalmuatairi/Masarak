@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSkillProfile } from '../hooks/use-skill-profile';
 import dataset from '../masarak_dataset.json';
 import { getSkillGapReport, readinessLabels } from '../utils/skill-gap';
+import { careerProfiles } from '../constants/career-profiles';
 
 const titles: Record<string, string> = {
     C01: 'مهندس برمجيات',
@@ -47,6 +48,7 @@ export default function CareerScreen() {
     const requirements = dataset.career_skills.filter(
         (item) => item.career_id === career.career_id
     );
+    const roleProfile = careerProfiles[career.career_id];
     // An empty skill list means no saved skills, same as the home screen.
     const gap = getSkillGapReport(career.career_id, savedSkills?.length ? savedSkills : null);
 
@@ -110,6 +112,24 @@ export default function CareerScreen() {
                         </>
                     )}
                 </View>
+
+                {roleProfile ? (
+                    <View style={styles.card}>
+                        <Text style={styles.heading}>التعليم والخبرة والشهادات</Text>
+                        <Text style={styles.skillName}>التعليم المعتاد</Text>
+                        <Text style={styles.note}>{roleProfile.education}</Text>
+                        <Text style={styles.skillName}>الخبرة العملية</Text>
+                        <Text style={styles.note}>{roleProfile.experience}</Text>
+                        <Text style={styles.skillName}>الشهادات المهنية</Text>
+                        <Text style={styles.note}>{roleProfile.certifications}</Text>
+                        {roleProfile.sources.map(source => (
+                            <Pressable key={source.url} accessibilityRole="link" onPress={() => void Linking.openURL(source.url)}>
+                                <Text style={styles.link}>{source.label}</Text>
+                            </Pressable>
+                        ))}
+                        <Text style={styles.note}>هذه معلومات إرشادية عامة. إعلان الوظيفة المستهدف هو المرجع النهائي، ولا تدخل الشهادة أو سنوات الخبرة في نسبة تغطية المهارات الحالية.</Text>
+                    </View>
+                ) : null}
 
                 {(['core', 'additional'] as const).map((priority) => (
                     <View key={priority} style={styles.section}>

@@ -31,6 +31,7 @@ function harness() {
     const requireModule = name => {
       if (name.includes('async-storage')) return storage;
       if (name.endsWith('masarak_dataset.json')) return dataset;
+      if (name === '../constants/learning-resources') return { learningResourceIds: new Set(['github-skills-introduction']) };
       if (name === 'expo-file-system') return { Directory, File, Paths: { document: 'documents', cache: 'cache' } };
       if (name === 'react-native-url-polyfill/auto') return {};
       if (name === './auth-storage') return { authStorage: {} };
@@ -66,6 +67,16 @@ test('new accounts do not upload local data until cloud saving is enabled', asyn
   const f = engineFixture({ hasLocal: true, local: 'local CV' });
   assert.equal(await f.sync(), 'disabled'); assert.equal(f.s.writes, 0);
   assert.equal(await f.sync('auto', true), 'synced'); assert.equal(f.s.writes, 1); assert.equal(f.s.meta.enabled, true);
+});
+
+test('learning progress accepts valid completion dates and old snapshots remain compatible', () => {
+  const h = harness();
+  const types = h.load('cloud-types.ts');
+  const old = types.parseCloudSnapshot(clone(emptySnapshot), 'A');
+  assert.deepEqual(clone(old.learningProgress), {});
+  const updated = types.parseCloudSnapshot({ ...clone(emptySnapshot), learningProgress: { 'github-skills-introduction': '2026-10-14T10:00:00.000Z' } }, 'A');
+  assert.equal(updated.learningProgress['github-skills-introduction'], '2026-10-14T10:00:00.000Z');
+  assert.throws(() => types.parseCloudSnapshot({ ...clone(emptySnapshot), learningProgress: { course: 'not-a-date' } }, 'A'));
 });
 test('a fresh device restores the existing account snapshot and its baseline', async () => {
   const f = engineFixture({ remote: remote(3) });

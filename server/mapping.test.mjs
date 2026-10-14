@@ -43,7 +43,7 @@ test('data references resolve and aliases do not produce extra counted core requ
   for (const row of data.career_skills) assert.ok(ids.has(row.skill_id));
   for (const role of data.careers) {
     const core = data.career_skills.filter(row => row.career_id === role.career_id && row.priority === 'core');
-    assert.equal(core.length, 6);
+    assert.equal(core.length, role.career_id === 'C01' ? 7 : 6);
     assert.equal(new Set(core.map(row => row.skill_id)).size, core.length);
   }
   assert.equal(new Set(['Java', 'Python', 'C++'].map(match)).size, 1);

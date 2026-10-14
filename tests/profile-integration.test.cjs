@@ -120,5 +120,5 @@ test('three programming languages count as one core competency and do not alter 
   const profile = await h.api.readSkillProfile();
   assert.deepEqual(plain(profile.skill_ids), ['T0644']);
   const report = h.matches(profile.skill_ids).find(c => c.career_id === 'C01');
-  assert.equal(report.matched, 1); assert.equal(report.total, 6); assert.equal(report.score, 17);
+  assert.equal(report.matched, 1); assert.equal(report.total, 7); assert.equal(report.score, 14);
 });

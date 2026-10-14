@@ -1,5 +1,5 @@
 {
-  "version": "0.3",
+  "version": "0.4",
   "intended_use": "prototype only; not validated Saudi employment readiness",
   "careers": [
     {
@@ -38222,14 +38222,14 @@
       "career_id": "C01",
       "skill_id": "T0879",
       "name": "Version control/source code management tools usage",
-      "priority": "additional",
-      "priority_origin": "Masarak curated foundation extension; not an official O*NET priority",
-      "weight": 0,
+      "priority": "core",
+      "priority_origin": "Masarak mapping to SFIA 9 configuration management core competency; review against target vacancy",
+      "weight": 1,
       "target_level": null,
       "status": "prototype_semantic_mapping",
-      "evidence_url": "https://www.onetonline.org/link/details/15-1252.00",
-      "evidence_section": "Software skills / Tasks",
-      "evidence_summary": "Role-supporting foundation; not proof of occupational proficiency",
+      "evidence_url": "https://sfia-online.org/en/sfia-9/sfia-views/software-engineering-competencies/core-software-engineering-competencies",
+      "evidence_section": "Configuration management",
+      "evidence_summary": "Version/source control is mapped to the SFIA core configuration-management competency; CV evidence still requires review",
       "source_file": "Digital SSF Skills Database_En2 (1)(1).xlsx",
       "source_sheet": "Unique Technical Skills",
       "source_cell": "B891"
