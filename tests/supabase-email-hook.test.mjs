@@ -72,7 +72,7 @@ test('Supabase Edge sends a signed signup code only through the fixed Brevo endp
   assert.match(calls[0].payload.textContent, /123456/);
   assert.doesNotMatch(calls[0].payload.subject, /123456/);
   assert.doesNotMatch(calls[0].payload.htmlContent, /href=/);
-  assert.match(calls[0].payload.headers.IdempotencyKey, /^[a-f0-9]{64}$/);
+  assert.match(calls[0].payload.headers.idempotencyKey, /^[a-f0-9]{8}-[a-f0-9]{4}-8[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
   assert.ok(calls[0].init.signal instanceof AbortSignal);
 });
 
@@ -163,7 +163,7 @@ test('Secure email-change sends reversed hashes to the correct two recipients', 
   const next = calls.find(call => call.payload.to[0].email === 'new@example.test');
   assert.equal(new URL(old.payload.textContent.split('\n')[1]).searchParams.get('token'), 'b'.repeat(32));
   assert.equal(new URL(next.payload.textContent.split('\n')[1]).searchParams.get('token'), 'a'.repeat(32));
-  assert.notEqual(old.payload.headers.IdempotencyKey, next.payload.headers.IdempotencyKey);
+  assert.notEqual(old.payload.headers.idempotencyKey, next.payload.headers.idempotencyKey);
 });
 
 test('Idempotency is stable across retries and distinct for different events', async () => {
@@ -171,8 +171,8 @@ test('Idempotency is stable across retries and distinct for different events', a
   assert.equal((await handler(signedRequest())).status, 200);
   assert.equal((await handler(signedRequest())).status, 200);
   assert.equal((await handler(signedRequest(signup(), { id: 'different-event' }))).status, 200);
-  assert.equal(calls[0].payload.headers.IdempotencyKey, calls[1].payload.headers.IdempotencyKey);
-  assert.notEqual(calls[0].payload.headers.IdempotencyKey, calls[2].payload.headers.IdempotencyKey);
+  assert.equal(calls[0].payload.headers.idempotencyKey, calls[1].payload.headers.idempotencyKey);
+  assert.notEqual(calls[0].payload.headers.idempotencyKey, calls[2].payload.headers.idempotencyKey);
 });
 
 test('Brevo errors are not acknowledged or disclosed to the caller', async () => {

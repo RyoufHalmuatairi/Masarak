@@ -146,12 +146,12 @@ test('secure email changes map Supabase token hashes to the correct recipients',
 test('repeated events have stable provider idempotency keys, separate per recipient', async t => {
   const h = await harness(t);
   await h.post(); await h.post();
-  assert.equal(h.sent[0].body.headers.IdempotencyKey, h.sent[1].body.headers.IdempotencyKey);
+  assert.equal(h.sent[0].body.headers.idempotencyKey, h.sent[1].body.headers.idempotencyKey);
   const payload = fixture('email_change');
   payload.email_data.token_hash_new = 'b'.repeat(64);
   payload.email_data.token_new = '654321';
   await h.post(JSON.stringify(payload));
-  assert.notEqual(h.sent[2].body.headers.IdempotencyKey, h.sent[3].body.headers.IdempotencyKey);
+  assert.notEqual(h.sent[2].body.headers.idempotencyKey, h.sent[3].body.headers.idempotencyKey);
 });
 
 test('provider failures and timeouts are not reported as success or leaked', async t => {

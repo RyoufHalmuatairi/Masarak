@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { Webhook } from 'standardwebhooks';
 import { ReplitConnectors } from '@replit/connectors-sdk';
 import { buildAuthEmails, EmailPayloadError } from './auth-email-templates.mjs';
+import { emailIdempotencyKey } from '../supabase/functions/_shared/email-idempotency.ts';
 
 const connectors = new ReplitConnectors();
 const safeError = (res, status, message) => res.status(status).json({ error: { http_code: status, message } });
@@ -56,11 +57,11 @@ export function createEmailHookRouter({
     try {
       // Stable per recipient: retries and multiple instances use the same provider key.
       const sends = emails.map(async email => {
-        const key = createHash('sha256').update(`${id}:${payload.email_data.email_action_type}:${email.to[0].email}`).digest('hex');
+        const key = emailIdempotencyKey(createHash('sha256').update(`${id}:${payload.email_data.email_action_type}:${email.to[0].email}`).digest());
         const response = await proxy('/smtp/email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...email, sender: { id: config.senderId }, headers: { IdempotencyKey: key } }),
+          body: JSON.stringify({ ...email, sender: { id: config.senderId }, headers: { idempotencyKey: key } }),
         });
         if (response.status === 201) return;
         // Brevo rejects retries for an already used idempotency key.

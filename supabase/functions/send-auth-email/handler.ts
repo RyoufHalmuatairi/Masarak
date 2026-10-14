@@ -1,4 +1,5 @@
 import { buildAuthEmails, EmailPayloadError, type EmailConfig } from '../_shared/auth-email-templates.ts';
+import { emailIdempotencyKey } from '../_shared/email-idempotency.ts';
 
 interface SignatureVerifier {
   verify(body: string, headers: Record<string, string>): unknown;
@@ -128,13 +129,13 @@ export function createAuthEmailHandler({
     try {
       const sends = emails.map(async email => {
         const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${id}:${action}:${email.to[0].email}`));
-        const key = Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
+        const key = emailIdempotencyKey(new Uint8Array(bytes));
         const response = await fetchImpl(BREVO_SEND_URL, {
           method: 'POST',
           redirect: 'error',
           signal: abort.signal,
           headers: { 'Content-Type': 'application/json', 'api-key': config.apiKey },
-          body: JSON.stringify({ ...email, sender: { id: config.senderId }, headers: { IdempotencyKey: key } }),
+          body: JSON.stringify({ ...email, sender: { id: config.senderId }, headers: { idempotencyKey: key } }),
         });
         if (response.status === 201) {
           await response.body?.cancel();

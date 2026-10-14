@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = new URL('../', import.meta.url);
 const inputs = [
+  'supabase/functions/_shared/email-idempotency.ts',
   'supabase/functions/_shared/auth-email-templates.ts',
   'supabase/functions/send-auth-email/handler.ts',
   'supabase/functions/send-auth-email/index.ts',

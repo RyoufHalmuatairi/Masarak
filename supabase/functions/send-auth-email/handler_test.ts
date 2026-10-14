@@ -34,7 +34,7 @@ Deno.test('Deno runtime verifies standardwebhooks and sends the six-digit code',
     fetchImpl: async (url, init) => {
       if (url !== 'https://api.brevo.com/v3/smtp/email') throw new Error('Unexpected destination');
       const message = JSON.parse(String(init && 'body' in init ? init.body : undefined));
-      if (!message.textContent.includes('123456') || !/^[a-f0-9]{64}$/.test(message.headers.IdempotencyKey)) throw new Error('Invalid email');
+      if (!message.textContent.includes('123456') || !/^[a-f0-9]{8}-[a-f0-9]{4}-8[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(message.headers.idempotencyKey)) throw new Error('Invalid email');
       sent = true;
       return Response.json({}, { status: 201 });
     },
