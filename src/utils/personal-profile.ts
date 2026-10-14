@@ -1,0 +1,35 @@
+import AsyncStorage, { captureDataScope } from './scoped-storage';
+import dataset from '../masarak_dataset.json';
+
+export type PersonalProfile = {
+  version: 1; name: string; major: string; institution: string;
+  education: string; studyStatus: string; studyDates: string;
+  interests: string[]; traits: string[]; careerGoal: string | null;
+};
+export const PERSONAL_PROFILE_KEY = 'masarak-personal-profile-v1';
+export const emptyPersonalProfile = (): PersonalProfile => ({ version: 1, name: '', major: '', institution: '', education: '', studyStatus: '', studyDates: '', interests: [], traits: [], careerGoal: null });
+export function parsePersonalProfile(value: unknown): PersonalProfile {
+  if (!value || typeof value !== 'object') throw new Error('Invalid personal profile');
+  const v = value as Record<string, unknown>;
+  const fields = ['name', 'major', 'institution', 'education', 'studyStatus', 'studyDates'] as const;
+  if (v.version !== 1 || fields.some(field => typeof v[field] !== 'string' || (v[field] as string).length > 300)) throw new Error('Invalid personal profile');
+  const list = (field: 'interests' | 'traits') => {
+    const values = v[field];
+    if (!Array.isArray(values) || values.length > 30 || values.some(item => typeof item !== 'string' || item.length > 100)) throw new Error('Invalid profile list');
+    return [...new Set(values.map(item => item.trim()).filter(Boolean))];
+  };
+  if (v.careerGoal !== null && (typeof v.careerGoal !== 'string' || !dataset.careers.some(career => career.career_id === v.careerGoal))) throw new Error('Invalid career goal');
+  return { version: 1, ...Object.fromEntries(fields.map(field => [field, (v[field] as string).trim()])), interests: list('interests'), traits: list('traits'), careerGoal: v.careerGoal } as PersonalProfile;
+}
+export async function readPersonalProfile(): Promise<PersonalProfile | null> {
+  const raw = await AsyncStorage.getItem(PERSONAL_PROFILE_KEY);
+  return raw === null ? null : parsePersonalProfile(JSON.parse(raw));
+}
+let pending: Promise<unknown> = Promise.resolve();
+export function savePersonalProfile(value: PersonalProfile): Promise<PersonalProfile> {
+  const scope = captureDataScope();
+  const profile = parsePersonalProfile(value);
+  const task = pending.then(async () => { scope.assertCurrent(); await readPersonalProfile(); scope.assertCurrent(); await AsyncStorage.setItem(PERSONAL_PROFILE_KEY, JSON.stringify(profile)); scope.assertCurrent(); return profile; });
+  pending = task.catch(() => undefined);
+  return task;
+}

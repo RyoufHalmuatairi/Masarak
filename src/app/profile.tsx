@@ -9,15 +9,19 @@ import { MasarakIcon } from '../components/masarak-icon';
 import { useSkillProfile } from '../hooks/use-skill-profile';
 import { saveManualSkills } from '../utils/skill-profile';
 import dataset from '../masarak_dataset.json';
+import { PersonalProfileForm } from '../components/personal-profile-form';
+import { CloudCard } from '../components/cloud-card';
+import { usePersonalProfile } from '../hooks/use-personal-profile';
 
 const skills = dataset.skills.filter(skill => dataset.career_skills.some(link => link.skill_id === skill.skill_id));
 export default function ProfileScreen() {
   const router = useRouter();
   const auth = useAuth();
+  const { personal } = usePersonalProfile();
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [accountError, setAccountError] = useState('');
-  const displayName = typeof auth.session?.user.user_metadata?.display_name === 'string' ? auth.session.user.user_metadata.display_name.trim().slice(0, 80) : 'ملفك المهني';
+  const displayName = personal?.name || (typeof auth.session?.user.user_metadata?.display_name === 'string' ? auth.session.user.user_metadata.display_name.trim().slice(0, 80) : 'ملفك المهني');
   async function leaveAccount() {
     setSigningOut(true); setAccountError('');
     try { await auth.signOut(); router.replace('/'); }
@@ -47,6 +51,8 @@ export default function ProfileScreen() {
     <Text style={ui.eyebrow}>رحلتك، بطريقتك</Text><Text style={ui.title}>ملفي</Text>
     <View style={styles.header}><View style={styles.avatar}><MasarakIcon name="profile" size={32} /></View><Text style={ui.heading}>{auth.session ? displayName : 'ملفك المهني'}</Text><Text style={ui.note}>{auth.session?.user.email ?? 'تستخدم مسارك دون حساب'}</Text></View>
     {!ready ? <Text style={ui.text}>جارٍ تحميل ملفك…</Text> : error ? <Text style={styles.error}>{error}</Text> : <>
+      <PersonalProfileForm />
+      <CloudCard />
       <View style={styles.stats}>{stats.map(stat => <View key={stat.title} style={styles.stat}><Text style={styles.count}>{stat.count}</Text><Text style={styles.statTitle}>{stat.title}</Text></View>)}</View>
       <Pressable accessibilityRole="button" style={ui.card} onPress={() => router.push('/upload-cv')}><View style={ui.row}><Text style={ui.heading}>سيرتي الذاتية</Text><MasarakIcon name="upload" /></View><Text style={ui.text}>{profile?.cv ? 'التحليل المعتمد محفوظ. يمكنك مراجعة السيرة أو إعادة تحليلها.' : 'ارفع سيرتك واستخرج مهاراتك وخبراتك.'}</Text><Text style={ui.link}>فتح السيرة ←</Text></Pressable>
       <View style={ui.card}><View style={ui.row}><Text style={ui.heading}>ملف مهاراتي</Text><MasarakIcon name="careers" /></View><Text style={ui.text}>مهارات السيرة المعتمدة تدخل في النتائج تلقائيًا. يمكنك إضافة مهارات أخرى يدويًا؛ لتعديل مهارات السيرة افتح مراجعتها.</Text><Pressable accessibilityRole="button" style={ui.outline} onPress={() => { setSelected(profile?.manual_skill_ids ?? []); setEditing(value => !value); }}><Text style={ui.outlineText}>{editing ? 'إغلاق التعديل' : 'مهاراتي اليدوية'}</Text></Pressable></View>
@@ -58,9 +64,9 @@ export default function ProfileScreen() {
       </View>}
       <Pressable accessibilityRole="button" style={ui.card} onPress={() => router.push('/learning-plan')}><View style={ui.row}><Text style={ui.heading}>خطة تعلمي</Text><MasarakIcon name="plan" /></View><Text style={ui.text}>مهارات اخترت تطويرها وخطوات مقترحة للتطبيق.</Text></Pressable>
     </>}
-    {auth.session ? <View style={ui.card}><Text style={ui.text}>ملف هذا الحساب محفوظ على الجهاز ومستقل عن ملف الضيف. المزامنة بين الأجهزة لم تُفعّل بعد.</Text><Pressable accessibilityRole="button" disabled={signingOut} onPress={() => router.push('/reset-password')}><Text style={ui.link}>تغيير كلمة المرور</Text></Pressable>{confirmSignOut ? <><Text style={ui.text}>تريد تسجيل الخروج؟ بيانات الحساب تبقى محفوظة على الجهاز، ويعود التطبيق إلى وضع الضيف.</Text><Pressable accessibilityRole="button" disabled={signingOut} onPress={() => void leaveAccount()} style={ui.outline}><Text style={ui.outlineText}>{signingOut ? 'جارٍ تسجيل الخروج…' : 'تأكيد تسجيل الخروج'}</Text></Pressable><Pressable accessibilityRole="button" disabled={signingOut} onPress={() => setConfirmSignOut(false)}><Text style={ui.link}>إلغاء</Text></Pressable></> : <Pressable accessibilityRole="button" onPress={() => setConfirmSignOut(true)}><Text style={ui.link}>تسجيل الخروج</Text></Pressable>}{accountError ? <Text style={styles.error}>{accountError}</Text> : null}</View> : <Pressable accessibilityRole="button" style={ui.outline} onPress={() => router.push({ pathname: '/account', params: { mode: 'login' } })}><Text style={ui.outlineText}>تسجيل الدخول أو إنشاء حساب</Text></Pressable>}
+    {auth.session ? <View style={ui.card}><Text style={ui.text}>ملف هذا الحساب مستقل عن ملف الضيف. حالة النسخة السحابية تظهر في بطاقة الحفظ أعلاه.</Text><Pressable accessibilityRole="button" disabled={signingOut} onPress={() => router.push('/reset-password')}><Text style={ui.link}>تغيير كلمة المرور</Text></Pressable>{confirmSignOut ? <><Text style={ui.text}>تريد تسجيل الخروج؟ بيانات الحساب تبقى محفوظة على الجهاز، ويعود التطبيق إلى وضع الضيف.</Text><Pressable accessibilityRole="button" disabled={signingOut} onPress={() => void leaveAccount()} style={ui.outline}><Text style={ui.outlineText}>{signingOut ? 'جارٍ تسجيل الخروج…' : 'تأكيد تسجيل الخروج'}</Text></Pressable><Pressable accessibilityRole="button" disabled={signingOut} onPress={() => setConfirmSignOut(false)}><Text style={ui.link}>إلغاء</Text></Pressable></> : <Pressable accessibilityRole="button" onPress={() => setConfirmSignOut(true)}><Text style={ui.link}>تسجيل الخروج</Text></Pressable>}{accountError ? <Text style={styles.error}>{accountError}</Text> : null}</View> : <Pressable accessibilityRole="button" style={ui.outline} onPress={() => router.push({ pathname: '/account', params: { mode: 'login' } })}><Text style={ui.outlineText}>تسجيل الدخول أو إنشاء حساب</Text></Pressable>}
     <Pressable accessibilityRole="button" onPress={() => router.replace('/')}><Text style={ui.link}>العودة لشاشة البداية</Text></Pressable>
-    <Text style={ui.note}>العربية والإنجليزية قريبًا. السيرة وخطة التعلم محفوظتان محليًا، ولا تُرفعان إلى حساب Supabase.</Text>
+    <Text style={ui.note}>العربية والإنجليزية قريبًا. يبقى ملفك محفوظًا على الجهاز؛ تُزامن نسخته الخاصة بحسابك عند تفعيل الحفظ السحابي.</Text>
   </ScrollView></SafeAreaView>;
 }
 const styles = StyleSheet.create({ header: { alignItems: 'center', paddingVertical: 18, gap: 10 }, avatar: { padding: 24, borderRadius: 45, backgroundColor: colors.mint }, stats: { flexDirection: 'row-reverse', backgroundColor: colors.surface, borderRadius: 20, borderWidth: 1, borderColor: colors.border, paddingVertical: 20 }, stat: { flex: 1, alignItems: 'center', gap: 6 }, count: { color: colors.primary, fontSize: 25, fontWeight: '700' }, statTitle: { color: colors.muted, fontSize: 11, textAlign: 'center' }, skill: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.soft, borderRadius: 14, padding: 16, gap: 8 }, selected: { backgroundColor: colors.mint, borderColor: colors.primary }, skillName: { color: colors.ink, fontSize: 16, fontWeight: '600' }, skillDescription: { color: colors.muted, fontSize: 13, lineHeight: 22 }, error: { color: colors.error, fontSize: 14, lineHeight: 23, textAlign: 'right' } });

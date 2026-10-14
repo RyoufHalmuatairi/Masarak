@@ -10,11 +10,13 @@ import { colors, ui } from '../constants/design';
 import { useSkillProfile } from '../hooks/use-skill-profile';
 import { useLearningPlan } from '../hooks/use-learning-plan';
 import { careerTitles, getCareerMatches } from '../utils/career-matches';
+import { usePersonalProfile } from '../hooks/use-personal-profile';
 
 export default function HomeScreen() {
   const router = useRouter();
   const auth = useAuth();
-  const firstName = typeof auth.session?.user.user_metadata?.display_name === 'string' ? auth.session.user.user_metadata.display_name.trim().split(/\s+/)[0].slice(0, 25) : '';
+  const { personal } = usePersonalProfile();
+  const firstName = personal?.name ? personal.name.trim().split(/\s+/)[0].slice(0, 25) : typeof auth.session?.user.user_metadata?.display_name === 'string' ? auth.session.user.user_metadata.display_name.trim().split(/\s+/)[0].slice(0, 25) : '';
   const { profile, ready, error } = useSkillProfile();
   const learning = useLearningPlan();
   const hasSkills = ready && !error && !!profile?.skill_ids.length;

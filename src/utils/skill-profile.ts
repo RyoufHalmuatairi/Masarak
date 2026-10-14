@@ -8,7 +8,8 @@ export type CvEntry = { name: string; organization: string; dates: string; descr
 export type CvAnalysis = { skills: CvSkill[]; certificates: CvCertificate[]; experiences: CvExperience[]; education?: CvEntry[]; projects?: CvEntry[]; activities?: CvEntry[]; warnings: string[] };
 export type CvProfile = CvAnalysis & { reviewed_at: string };
 export type SkillProfile = { version: 3; skill_ids: string[]; manual_skill_ids: string[]; excluded_cv_skill_ids: string[]; cv: CvProfile | null };
-const key = 'masarak-skills-v1';
+export const SKILL_PROFILE_KEY = 'masarak-skills-v1';
+const key = SKILL_PROFILE_KEY;
 const validIds = new Set(dataset.skills.map(item => item.skill_id));
 const uniqueValid = (ids: string[]) => [...new Set(ids.filter(id => validIds.has(id)))];
 const isIds = (value: unknown): value is string[] => Array.isArray(value) && value.every(id => typeof id === 'string');
@@ -28,10 +29,7 @@ function compose(manual: string[], cv: CvProfile | null, excluded: string[] = []
   return { version: 3, manual_skill_ids: manualIds, excluded_cv_skill_ids: excludedIds, skill_ids: uniqueValid([...manualIds, ...cvSkillIds]), cv };
 }
 
-export async function readSkillProfile(): Promise<SkillProfile | null> {
-  const saved = await AsyncStorage.getItem(key);
-  if (saved === null) return null;
-  const parsed: unknown = JSON.parse(saved);
+export function parseSkillProfile(parsed: unknown): SkillProfile {
   if (isIds(parsed)) return compose(parsed, null);
   if (!parsed || typeof parsed !== 'object') throw new Error('Invalid profile');
   const value = parsed as Record<string, unknown>;
@@ -45,6 +43,11 @@ export async function readSkillProfile(): Promise<SkillProfile | null> {
   }
   if (value.version !== 3 || !isIds(value.manual_skill_ids) || !isIds(value.excluded_cv_skill_ids)) throw new Error('Invalid profile');
   return compose(value.manual_skill_ids, cv, value.excluded_cv_skill_ids);
+}
+
+export async function readSkillProfile(): Promise<SkillProfile | null> {
+  const raw = await AsyncStorage.getItem(key);
+  return raw === null ? null : parseSkillProfile(JSON.parse(raw));
 }
 
 let pending: Promise<unknown> = Promise.resolve();
