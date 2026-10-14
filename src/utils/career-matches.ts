@@ -1,5 +1,5 @@
-import dataset from '../masarak_dataset.json';
 import { calculateCareerScore } from './career-score';
+import { jobPaths } from '../constants/job-paths';
 
 export const careerTitles: Record<string, string> = {
   C01: 'مهندس برمجيات',
@@ -12,9 +12,10 @@ export const careerTitles: Record<string, string> = {
   C08: 'مهندس سحابة وDevOps',
   C09: 'محلل نظم أعمال',
 };
+for (const path of jobPaths) careerTitles[path.id] = path.title;
 export function getCareerMatches(ids: string[] | null) {
-  return dataset.careers.map(career => {
-    const report = calculateCareerScore(career.career_id, ids);
-    return { ...career, matched: report.matchedCore.length, total: report.core.length, missing: report.missingCore, score: report.score };
+  return jobPaths.map(path => {
+    const report = calculateCareerScore(path.id, ids);
+    return { career_id: path.id, title: path.title, description: path.description, matched: report.matchedCore.length, total: report.core.length, missing: report.missingCore, score: report.score };
   }).sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
 }

@@ -21,6 +21,7 @@ const certifications = moduleFrom(certificationsCode);
 const profiles = moduleFrom(profilesCode);
 const careerScore = moduleFrom(fs.readFileSync(path.join(root, 'src/utils/career-score.ts'), 'utf8'), name => {
   if (name.endsWith('masarak_dataset.json')) return dataset;
+  if (name.includes('job-path-requirements')) return { requirementsForCareerPath: id => dataset.career_skills.filter(row => row.career_id === id) };
   throw Error(name);
 });
 const readiness = moduleFrom(fs.readFileSync(path.join(root, 'src/utils/career-readiness.ts'), 'utf8'), name => {
@@ -28,6 +29,8 @@ const readiness = moduleFrom(fs.readFileSync(path.join(root, 'src/utils/career-r
   if (name.includes('professional-certifications')) return certifications;
   if (name.includes('learning-resources')) return resources;
   if (name.includes('career-profiles')) return profiles;
+  if (name.includes('job-paths')) return { resolveBaseCareerId: id => id, jobPaths: dataset.careers.map(career => ({ id: career.career_id, title: career.title, description: career.description })) };
+  if (name.includes('job-path-requirements')) return { jobPathRequirementProfile: () => null };
   if (name === './career-score') return careerScore;
   return {};
 });

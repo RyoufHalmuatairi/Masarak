@@ -2,11 +2,12 @@ import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 import { colors, ui } from '../constants/design';
+import { academicPrograms } from '../constants/academic-programs';
 import { useAuth } from '../contexts/auth-context';
 import { emptyPersonalProfile, readPersonalProfile, savePersonalProfile, type PersonalProfile } from '../utils/personal-profile';
 import { readSkillProfile } from '../utils/skill-profile';
 import { careerTitles } from '../utils/career-matches';
-import dataset from '../masarak_dataset.json';
+import { jobPaths } from '../constants/job-paths';
 
 const splitList = (text: string) => [...new Set(text.split(/[,،;؛\n]/).map(item => item.trim()).filter(Boolean))];
 export function PersonalProfileForm() {
@@ -51,9 +52,8 @@ export function PersonalProfileForm() {
       setMessage('نُقل أول مؤهل من سيرتك المعتمدة. راجع الحقول ثم احفظها.');
     } catch { if (active.current) setError('تعذر قراءة تعليم السيرة. يمكنك إدخاله يدويًا.'); }
   }
-  const fields: { key: 'name' | 'major' | 'institution' | 'education' | 'studyStatus' | 'studyDates'; label: string; placeholder: string }[] = [
+  const fields: { key: 'name' | 'institution' | 'education' | 'studyStatus' | 'studyDates'; label: string; placeholder: string }[] = [
     { key: 'name', label: 'اسمك', placeholder: 'الاسم الذي يظهر في ملفك' },
-    { key: 'major', label: 'التخصص', placeholder: 'مثل علوم الحاسب' },
     { key: 'institution', label: 'الجامعة أو الجهة التعليمية', placeholder: 'اسم الجهة' },
     { key: 'education', label: 'المؤهل الدراسي', placeholder: 'مثل بكالوريوس علوم الحاسب' },
     { key: 'studyStatus', label: 'حالة الدراسة', placeholder: 'مثل أدرس حاليًا أو متخرج' },
@@ -62,6 +62,11 @@ export function PersonalProfileForm() {
   return <View style={ui.card}>
     <Text style={ui.heading}>بياناتي وتعليمي واهتماماتي</Text>
     {!ready ? <ActivityIndicator color={colors.primary} /> : editing ? <>
+      <Text style={ui.note}>تخصصي الجامعي</Text>
+      <View style={{ flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 8 }}>
+        {academicPrograms.map(program => <Pressable key={program.id} disabled={busy} accessibilityRole="radio" accessibilityState={{ selected: profile.major === program.title }} style={[ui.outline, { minHeight: 44, padding: 11 }, profile.major === program.title && { backgroundColor: colors.mint }]} onPress={() => setProfile(p => ({ ...p, major: program.title, education: !p.education || academicPrograms.some(item => item.degree === p.education) ? program.degree : p.education }))}><Text style={[ui.outlineText, { fontSize: 14 }]}>{profile.major === program.title ? '✓ ' : ''}{program.title}</Text></Pressable>)}
+      </View>
+      <TextInput accessibilityLabel="تخصص آخر" maxLength={300} editable={!busy} style={ui.input} placeholderTextColor={colors.muted} placeholder="أو اكتب تخصصًا آخر" value={academicPrograms.some(program => program.title === profile.major) ? '' : profile.major} onChangeText={major => setProfile(p => ({ ...p, major }))} />
       {fields.map(field => <View key={field.key} style={{ gap: 7 }}><Text style={ui.note}>{field.label}</Text><TextInput accessibilityLabel={field.label} maxLength={field.key === 'name' ? 80 : 300} editable={!busy} style={ui.input} placeholderTextColor={colors.muted} placeholder={field.placeholder} value={profile[field.key]} onChangeText={value => setProfile(p => ({ ...p, [field.key]: value }))} /></View>)}
       <Text style={ui.note}>نظام المعدل التراكمي</Text>
       <View style={{ flexDirection: 'row-reverse', gap: 8 }}>
@@ -73,7 +78,7 @@ export function PersonalProfileForm() {
       <Text style={ui.note}>اهتماماتك — افصل بينها بفاصلة</Text><TextInput accessibilityLabel="اهتماماتي" editable={!busy} multiline maxLength={3100} style={ui.input} placeholder="مثل الأمن السيبراني، تطوير التطبيقات" placeholderTextColor={colors.muted} value={interests} onChangeText={setInterests} />
       <Text style={ui.note}>سماتك الشخصية — افصل بينها بفاصلة</Text><TextInput accessibilityLabel="سماتي الشخصية" editable={!busy} multiline maxLength={3100} style={ui.input} placeholder="مثل التحليل، التعاون، الفضول" placeholderTextColor={colors.muted} value={traits} onChangeText={setTraits} />
       <Text style={ui.note}>هدفك المهني اختياري؛ يمكنك استكشاف المسارات دون تحديده.</Text>
-      {[{ id: null, title: 'لم أحدد هدفًا بعد' }, ...dataset.careers.map(career => ({ id: career.career_id, title: careerTitles[career.career_id] ?? career.title }))].map(career => <Pressable key={career.id ?? 'none'} disabled={busy} accessibilityRole="radio" accessibilityState={{ selected: profile.careerGoal === career.id }} style={[ui.outline, profile.careerGoal === career.id && { backgroundColor: colors.mint }]} onPress={() => setProfile(p => ({ ...p, careerGoal: career.id }))}><Text style={ui.outlineText}>{profile.careerGoal === career.id ? '✓ ' : ''}{career.title}</Text></Pressable>)}
+      {[{ id: null, title: 'لم أحدد هدفًا بعد' }, ...jobPaths.map(career => ({ id: career.id, title: career.title }))].map(career => <Pressable key={career.id ?? 'none'} disabled={busy} accessibilityRole="radio" accessibilityState={{ selected: profile.careerGoal === career.id }} style={[ui.outline, profile.careerGoal === career.id && { backgroundColor: colors.mint }]} onPress={() => setProfile(p => ({ ...p, careerGoal: career.id }))}><Text style={ui.outlineText}>{profile.careerGoal === career.id ? '✓ ' : ''}{career.title}</Text></Pressable>)}
       <Pressable disabled={busy} accessibilityRole="button" style={ui.button} onPress={() => void save()}><Text style={ui.buttonText}>{busy ? 'جارٍ الحفظ…' : 'حفظ بيانات الملف'}</Text></Pressable>
       <Pressable disabled={busy} accessibilityRole="button" onPress={() => setEditing(false)}><Text style={ui.link}>إغلاق التعديل دون حفظ</Text></Pressable>
     </> : <>

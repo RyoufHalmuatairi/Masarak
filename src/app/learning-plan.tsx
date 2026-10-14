@@ -7,12 +7,23 @@ import { getLearningResources } from '../constants/learning-resources';
 import { useLearningPlan } from '../hooks/use-learning-plan';
 import { useLearningProgress } from '../hooks/use-learning-progress';
 import { useSkillProfile } from '../hooks/use-skill-profile';
+import { usePersonalProfile } from '../hooks/use-personal-profile';
+import { useProfessionalCertifications } from '../hooks/use-professional-certifications';
+import { jobPathById } from '../constants/job-paths';
+import { jobPathRequirementProfile } from '../constants/job-path-requirements';
+import { certificationsByIds } from '../constants/professional-certifications';
+import { displaySkillName } from '../utils/skill-labels';
 
 export default function LearningPlanScreen() {
   const router = useRouter();
   const learning = useLearningPlan();
   const courseProgress = useLearningProgress();
   const profileState = useSkillProfile();
+  const personalState = usePersonalProfile();
+  const certificationState = useProfessionalCertifications();
+  const selectedPath = jobPathById(personalState.personal?.careerGoal);
+  const roleProfile = jobPathRequirementProfile(selectedPath?.id ?? '');
+  const roleCertifications = certificationsByIds(roleProfile?.certificationIds ?? []);
   const skills = learning.plan.flatMap((id) => {
     const skill = dataset.skills.find((item) => item.skill_id === id);
     return skill ? [skill] : [];
@@ -26,7 +37,47 @@ export default function LearningPlanScreen() {
         </Pressable>
         <Text style={styles.title}>خطة تعلمي</Text>
         {profileState.error ? <Text style={styles.note}>{profileState.error}</Text> : null}
-        <Text style={styles.text}>مهارات اخترت تطويرها. إضافتها هنا لا تغيّر ملف مهاراتك أو نسبة المطابقة.</Text>
+        <Text style={styles.text}>الخطة مفصّلة إلى مهارات، شهادة مهنية اختيارية، مؤهل جامعي، وخبرة عملية. كل قسم يُحسب مستقلًا في الجاهزية.</Text>
+        {!selectedPath ? (
+          <View style={styles.card}>
+            <Text style={styles.heading}>حددي هدفك الوظيفي أولًا</Text>
+            <Text style={styles.text}>اختاري مسمى وظيفيًا من «بياناتي» حتى نعرض الشهادة والخبرة والمشاريع الخاصة به.</Text>
+            <Pressable accessibilityRole="button" onPress={() => router.push('/profile')}><Text style={styles.link}>فتح بياناتي</Text></Pressable>
+          </View>
+        ) : roleProfile ? (
+          <>
+            <View style={styles.card}>
+              <Text style={styles.heading}>هدفك: {selectedPath.title}</Text>
+              <Text style={styles.subheading}>1. المؤهل الجامعي</Text>
+              <Text style={styles.text}>{roleProfile.education}</Text>
+              <Text style={styles.note}>هذا البند يُقرأ من تخصصك ومؤهلك ومعدلك في «بياناتي». لا تضيفيه كمهارة أو شهادة مهنية.</Text>
+            </View>
+            <View style={styles.card}>
+              <Text style={styles.subheading}>2. الشهادة المهنية الاختيارية</Text>
+              <Text style={styles.note}>{roleCertifications.length ? 'يكفي اختيار الشهادة الأنسب لبيئة العمل المستهدفة. لا يلزم جمع جميع الخيارات، ولا تضعي علامة إلا بعد صدور الشهادة باسمك.' : 'لا توجد شهادة مهنية عامة ذات أولوية للخريج في هذا المسار؛ ركزي على المهارات والمشروع.'}</Text>
+              {certificationState.error ? <Text style={styles.note}>{certificationState.error}</Text> : null}
+              {roleCertifications.map(certificate => {
+                const achieved = certificationState.achieved.includes(certificate.id);
+                return <View key={certificate.id} style={styles.resource}>
+                  <Text style={styles.resourceTitle}>{certificate.title}</Text>
+                  <Text style={styles.note}>{certificate.provider} · {certificate.level}</Text>
+                  <Text style={styles.note}>{certificate.cost}</Text>
+                  <Text style={styles.note}>{certificate.note}</Text>
+                  <Pressable accessibilityRole="link" onPress={() => void Linking.openURL(certificate.url)}><Text style={styles.link}>صفحة الشهادة الرسمية</Text></Pressable>
+                  <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: achieved, disabled: !certificationState.ready || certificationState.busy }} disabled={!certificationState.ready || certificationState.busy} style={[styles.checkButton, achieved && styles.checkButtonDone]} onPress={() => void certificationState.change(certificate.id, !achieved)}><Text style={styles.checkText}>{achieved ? '✓ حصلت على الشهادة' : '□ حصلت على الشهادة'}</Text></Pressable>
+                </View>;
+              })}
+            </View>
+            <View style={styles.card}>
+              <Text style={styles.subheading}>3. الخبرة والمشاريع المطلوبة</Text>
+              <Text style={styles.text}>{roleProfile.experience}</Text>
+              {roleProfile.projects.map(project => <Text key={project} style={styles.text}>• {project}</Text>)}
+              <Text style={styles.note}>أنجزي المشروع ثم اكتبيه داخل السيرة أو الخبرات وأعيدي تحليلها؛ عندها فقط يستطيع التطبيق احتساب دليله للمسار.</Text>
+              <Pressable accessibilityRole="button" onPress={() => router.push('/upload-cv')}><Text style={styles.link}>تحديث السيرة وإعادة التحليل</Text></Pressable>
+            </View>
+            <Text style={styles.heading}>4. المهارات والدورات</Text>
+          </>
+        ) : null}
         {learning.error ? (
           <Pressable accessibilityRole="button" onPress={() => void learning.reload()}>
             <Text style={styles.note}>{learning.error} اضغط لإعادة التحميل.</Text>
@@ -49,12 +100,12 @@ export default function LearningPlanScreen() {
           </View>
         ) : (
           <>
-            <Text style={styles.heading}>مهارات في خطتك: {skills.length}</Text>
+            <Text style={styles.heading}>مهارات اخترت تطويرها: {skills.length}</Text>
             {skills.map((skill) => {
               const resources = getLearningResources(skill.skill_id);
               return (
               <View key={skill.skill_id} style={styles.card}>
-                <Text style={styles.skill}>{skill.name}</Text>
+                <Text style={styles.skill}>{displaySkillName(skill.name)}</Text>
                 {profileState.ready && !profileState.error && profileState.profile?.skill_ids.includes(skill.skill_id) ? <Text style={styles.note}>✓ أصبحت ضمن مهارات ملفك المعتمد. يمكنك إبقاؤها للتدريب أو إزالتها من الخطة.</Text> : null}
                 {getLearningSteps(skill.name).map((step, index) => (
                   <Text key={index} style={styles.text}>{index + 1}. {step}</Text>

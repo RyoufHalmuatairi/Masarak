@@ -1,5 +1,6 @@
 import AsyncStorage, { captureDataScope } from './scoped-storage';
 import dataset from '../masarak_dataset.json';
+import { jobPathIds } from '../constants/job-paths';
 
 export type PersonalProfile = {
   version: 1; name: string; major: string; institution: string;
@@ -19,7 +20,7 @@ export function parsePersonalProfile(value: unknown): PersonalProfile {
     if (!Array.isArray(values) || values.length > 30 || values.some(item => typeof item !== 'string' || item.length > 100)) throw new Error('Invalid profile list');
     return [...new Set(values.map(item => item.trim()).filter(Boolean))];
   };
-  if (v.careerGoal !== null && (typeof v.careerGoal !== 'string' || !dataset.careers.some(career => career.career_id === v.careerGoal))) throw new Error('Invalid career goal');
+  if (v.careerGoal !== null && (typeof v.careerGoal !== 'string' || (!jobPathIds.has(v.careerGoal) && !dataset.careers.some(career => career.career_id === v.careerGoal)))) throw new Error('Invalid career goal');
   const gpaScale = v.gpaScale === 4 || v.gpaScale === 5 ? v.gpaScale : null;
   const gpa = typeof v.gpa === 'number' && Number.isFinite(v.gpa) && gpaScale !== null && v.gpa >= 0 && v.gpa <= gpaScale ? v.gpa : null;
   if ((v.gpa !== undefined && v.gpa !== null && gpa === null) || (v.gpaScale !== undefined && v.gpaScale !== null && gpaScale === null)) throw new Error('Invalid GPA');

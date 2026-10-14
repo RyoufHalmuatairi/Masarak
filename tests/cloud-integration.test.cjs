@@ -31,6 +31,7 @@ function harness() {
     const requireModule = name => {
       if (name.includes('async-storage')) return storage;
       if (name.endsWith('masarak_dataset.json')) return dataset;
+      if (name === '../constants/job-paths') return { jobPathIds: new Set(), resolveBaseCareerId: id => id, jobPaths: dataset.careers.map(career => ({ id: career.career_id, title: career.title, description: career.description })) };
       if (name === '../constants/learning-resources') return { learningResourceIds: new Set(['github-skills-introduction']) };
       if (name === '../constants/professional-certifications') return { professionalCertificationIds: new Set(['github-foundations']) };
       if (name === 'expo-file-system') return { Directory, File, Paths: { document: 'documents', cache: 'cache' } };

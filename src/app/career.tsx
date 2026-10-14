@@ -14,21 +14,11 @@ import { useLearningProgress } from '../hooks/use-learning-progress';
 import { useProfessionalCertifications } from '../hooks/use-professional-certifications';
 import dataset from '../masarak_dataset.json';
 import { getSkillGapReport, readinessLabels, readinessLevel } from '../utils/skill-gap';
-import { careerProfiles } from '../constants/career-profiles';
-import { certificationsForCareer } from '../constants/professional-certifications';
+import { certificationsByIds } from '../constants/professional-certifications';
 import { calculateCareerReadiness } from '../utils/career-readiness';
-
-const titles: Record<string, string> = {
-    C01: 'مهندس برمجيات',
-    C02: 'محلل بيانات',
-    C03: 'عالم بيانات',
-    C04: 'مهندس ذكاء اصطناعي وتعلّم آلي',
-    C05: 'محلل أمن سيبراني',
-    C06: 'مهندس شبكات',
-    C07: 'مهندس بيانات',
-    C08: 'مهندس سحابة وDevOps',
-    C09: 'محلل نظم أعمال',
-};
+import { displaySkillName } from '../utils/skill-labels';
+import { jobPathById } from '../constants/job-paths';
+import { jobPathRequirementProfile, requirementsForCareerPath } from '../constants/job-path-requirements';
 
 export default function CareerScreen() {
     const router = useRouter();
@@ -39,9 +29,7 @@ export default function CareerScreen() {
     const savedSkills = profile?.skill_ids ?? null;
     const cvSkills = new Set(profile?.cv?.skills.flatMap(skill => skill.mapped_skill_id && !profile.excluded_cv_skill_ids.includes(skill.mapped_skill_id) ? [skill.mapped_skill_id] : []) ?? []);
     const params = useLocalSearchParams<{ id?: string }>();
-    const career = dataset.careers.find(
-        (item) => item.career_id === params.id
-    );
+    const career = jobPathById(params.id);
 
     if (!career) {
         return (
@@ -56,14 +44,12 @@ export default function CareerScreen() {
         );
     }
 
-    const requirements = dataset.career_skills.filter(
-        (item) => item.career_id === career.career_id
-    );
-    const roleProfile = careerProfiles[career.career_id];
-    const roleCertifications = certificationsForCareer(career.career_id);
+    const requirements = requirementsForCareerPath(career.id);
+    const roleProfile = jobPathRequirementProfile(career.id);
+    const roleCertifications = certificationsByIds(roleProfile?.certificationIds ?? []);
     // An empty skill list means no saved skills, same as the home screen.
-    const gap = getSkillGapReport(career.career_id, savedSkills?.length ? savedSkills : null);
-    const readiness = calculateCareerReadiness(career.career_id, {
+    const gap = getSkillGapReport(career.id, savedSkills?.length ? savedSkills : null);
+    const readiness = calculateCareerReadiness(career.id, {
         skillProfile: profile,
         personal: personalState.personal,
         learningProgress: learningProgress.progress,
@@ -86,15 +72,15 @@ export default function CareerScreen() {
                 </Pressable>
 
                 <Text style={styles.title}>
-                    {titles[career.career_id] ?? career.title}
+                    {career.title}
                 </Text>
-                <Text style={styles.english}>{career.title}</Text>
+                <Text style={styles.english}>{career.majors.join(' · ')}</Text>
                 <Pressable
                     accessibilityRole="button"
                     onPress={() =>
                         router.push({
                             pathname: '/roadmap',
-                            params: { id: career.career_id },
+                            params: { id: career.id },
                         })
                     }
                 >
@@ -131,7 +117,7 @@ export default function CareerScreen() {
                                     <Text style={styles.skillName}>مهارات أساسية لم تُوثّق بعد</Text>
                                     {gap.missingCore.map((skill) => (
                                         <Text key={skill.skill_id} style={styles.note}>
-                                            • {skill.name}
+                                            • {displaySkillName(skill.name)}
                                         </Text>
                                     ))}
                                 </>
@@ -159,15 +145,15 @@ export default function CareerScreen() {
 
                 {roleProfile ? (
                     <View style={styles.card}>
-                        <Text style={styles.heading}>التعليم والخبرة والشهادات</Text>
-                        <Text style={styles.skillName}>التعليم المعتاد</Text>
+                        <Text style={styles.heading}>ما يحتاجه هذا المسمى تحديدًا</Text>
+                        <Text style={styles.skillName}>المؤهل الجامعي المناسب</Text>
                         <Text style={styles.note}>{roleProfile.education}</Text>
                         <Text style={styles.skillName}>الخبرة العملية</Text>
                         <Text style={styles.note}>{roleProfile.experience}</Text>
                         <Text style={styles.skillName}>مشاريع تثبت الجاهزية</Text>
                         {roleProfile.projects.map(project => <Text key={project} style={styles.note}>• {project}</Text>)}
-                        <Text style={styles.skillName}>الشهادات المهنية</Text>
-                        <Text style={styles.note}>{roleProfile.certifications}</Text>
+                        <Text style={styles.skillName}>الشهادة المهنية</Text>
+                        <Text style={styles.note}>{roleCertifications.length ? 'اختيارية ومساندة. اختاري واحدة مرتبطة بالأداة أو البيئة التي تستهدفينها؛ لا يلزم جمعها كلها.' : 'لا توجد شهادة مهنية عامة ذات أولوية لهذا المسمى في مرحلة الخريج؛ المشروع العملي أقوى.'}</Text>
                         {roleProfile.sources.map(source => (
                             <Pressable key={source.url} accessibilityRole="link" onPress={() => void Linking.openURL(source.url)}>
                                 <Text style={styles.link}>{source.label}</Text>
@@ -194,7 +180,8 @@ export default function CareerScreen() {
 
                                 return (
                                     <View key={item.skill_id} style={styles.card}>
-                                        <Text style={styles.skillName}>{item.name}</Text>
+                                        <Text style={styles.skillName}>{displaySkillName(item.name)}</Text>
+                                        <Text style={styles.note}>{priority === 'core' && 'priority_rank' in item ? (item.priority_rank <= 2 ? 'أولوية مرتفعة في هذا المسمى' : item.priority_rank <= 4 ? 'أولوية أساسية' : 'أساسية بعد إتقان الأولويات الأعلى') : 'مهارة إضافية بعد الأساسيات'}</Text>
                                         <Text style={styles.note}>
                                             {!profileLoaded
                                                 ? 'جارٍ تحميل ملف مهاراتك…'

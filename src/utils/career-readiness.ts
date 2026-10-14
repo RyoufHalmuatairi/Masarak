@@ -1,11 +1,12 @@
-import { certificationsForCareer } from '../constants/professional-certifications';
+import { certificationsByIds, certificationsForCareer } from '../constants/professional-certifications';
 import { learningResources } from '../constants/learning-resources';
 import { careerProfiles } from '../constants/career-profiles';
 import { calculateCareerScore } from './career-score';
 import type { PersonalProfile } from './personal-profile';
 import type { SkillProfile } from './skill-profile';
 import type { LearningProgress } from './learning-progress';
-import dataset from '../masarak_dataset.json';
+import { jobPaths, resolveBaseCareerId } from '../constants/job-paths';
+import { jobPathRequirementProfile } from '../constants/job-path-requirements';
 
 export type ReadinessWeights = { skills: number; practical: number; certifications: number; academic: number; learning: number };
 export const readinessWeights: Record<string, ReadinessWeights> = {
@@ -41,10 +42,13 @@ function isRelevantEvidence(value: unknown, keywords: string[]) {
 }
 
 export function calculateCareerReadiness(careerId: string, input: ReadinessInputs) {
-  const weights = readinessWeights[careerId] ?? readinessWeights.C01;
+  const baseCareerId = resolveBaseCareerId(careerId);
+  const pathProfile = jobPathRequirementProfile(careerId);
+  const weights = pathProfile?.weights ?? readinessWeights[baseCareerId] ?? readinessWeights.C01;
   const skillReport = calculateCareerScore(careerId, input.skillProfile?.skill_ids ?? null);
   const skillRatio = (skillReport.score ?? 0) / 100;
-  const profile = careerProfiles[careerId];
+  const profile = pathProfile ?? careerProfiles[baseCareerId];
+  const path = jobPaths.find(item => item.id === careerId);
   const allProjects = input.skillProfile?.cv?.projects ?? [];
   const allExperiences = input.skillProfile?.cv?.experiences ?? [];
   const projects = profile ? allProjects.filter(item => isRelevantEvidence(item, profile.evidenceKeywords)).length : 0;
@@ -53,7 +57,7 @@ export function calculateCareerReadiness(careerId: string, input: ReadinessInput
   // Only evidence whose text contains role signals earns practical points. Skill
   // coverage then scales those points so a generic project cannot inflate every role.
   const practicalRatio = documentedPracticalRatio * skillRatio;
-  const roleCertifications = certificationsForCareer(careerId);
+  const roleCertifications = pathProfile ? certificationsByIds(pathProfile.certificationIds) : certificationsForCareer(baseCareerId);
   // Certifications listed for one role are alternatives, not a checklist the
   // user must purchase. One verified role certificate earns this component.
   const certificationRatio = roleCertifications.some(item => input.professionalCertifications.includes(item.id)) ? 1 : 0;
@@ -64,7 +68,12 @@ export function calculateCareerReadiness(careerId: string, input: ReadinessInput
     : 0;
   const hasEducation = Boolean(input.personal?.education.trim() || input.personal?.major.trim());
   const academicText = `${input.personal?.education ?? ''} ${input.personal?.major ?? ''}`.toLocaleLowerCase();
-  const relevantMajor = Boolean(profile?.majorKeywords.some(keyword => academicText.includes(keyword.toLocaleLowerCase())));
+  const relevantMajor = path && Array.isArray(path.majors)
+    ? Boolean(path.majors.some(major => {
+        const normalized = major.toLocaleLowerCase();
+        return academicText.includes(normalized) || normalized.split(/\s+/).some(word => word.length > 4 && academicText.includes(word));
+      }))
+    : Boolean('majorKeywords' in profile && profile.majorKeywords.some(keyword => academicText.includes(keyword.toLocaleLowerCase())));
   const gpaRatio = input.personal?.gpa !== null && input.personal?.gpaScale
     ? Math.max(0, Math.min(1, input.personal.gpa / input.personal.gpaScale))
     : 0;
@@ -85,10 +94,10 @@ export function calculateCareerReadiness(careerId: string, input: ReadinessInput
 }
 
 export function getCareerReadinessMatches(input: ReadinessInputs) {
-  return dataset.careers.map(career => {
-    const readiness = calculateCareerReadiness(career.career_id, input);
+  return jobPaths.map(career => {
+    const readiness = calculateCareerReadiness(career.id, input);
     return {
-      ...career,
+      career_id: career.id, title: career.title, description: career.description,
       score: readiness.score,
       skillScore: readiness.skillReport.score,
       matched: readiness.skillReport.matchedCore.length,

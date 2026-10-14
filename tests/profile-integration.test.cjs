@@ -17,7 +17,7 @@ function harness(initial = null) {
     const output = ts.transpileModule(fs.readFileSync(path.join(root, 'src/utils', name), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
     const exports = {};
     modules.set(name, exports);
-    vm.runInNewContext(output, { exports, require: name => name.includes('async-storage') ? storage : name.endsWith('masarak_dataset.json') ? dataset : load(name.replace('./', '') + '.ts') });
+    vm.runInNewContext(output, { exports, require: name => name.includes('async-storage') ? storage : name.endsWith('masarak_dataset.json') ? dataset : name === '../constants/job-paths' ? { resolveBaseCareerId: id => id, jobPaths: dataset.careers.map(career => ({ id: career.career_id, title: career.title, description: career.description })) } : name === '../constants/job-path-requirements' ? { requirementsForCareerPath: id => dataset.career_skills.filter(row => row.career_id === id) } : load(name.replace('./', '') + '.ts') });
     return exports;
   }
   return { api: load('skill-profile.ts'), matches: load('career-matches.ts').getCareerMatches, raw: () => saved, failing: value => { fail = value; } };

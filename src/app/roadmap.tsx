@@ -12,6 +12,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import dataset from '../masarak_dataset.json';
 import { getLearningSteps } from '../constants/learning-steps';
 import { useLearningPlan } from '../hooks/use-learning-plan';
+import { displaySkillName } from '../utils/skill-labels';
+import { jobPathById } from '../constants/job-paths';
+import { requirementsForCareerPath } from '../constants/job-path-requirements';
 
 export default function RoadmapScreen() {
     const router = useRouter();
@@ -21,13 +24,9 @@ export default function RoadmapScreen() {
     const { profile, ready: loaded, error } = useSkillProfile();
     const savedSkills = profile?.skill_ids ?? null;
 
-    const career = dataset.careers.find(
-        (item) => item.career_id === id
-    );
-
-    const missing = dataset.career_skills.filter(
+    const career = jobPathById(id);
+    const missing = requirementsForCareerPath(id ?? '').filter(
         (item) =>
-            item.career_id === id &&
             item.priority === 'core' &&
             !savedSkills?.includes(item.skill_id)
     );
@@ -77,8 +76,8 @@ export default function RoadmapScreen() {
                     <>
                         <Text style={styles.text}>
                             هذه المهارات الأساسية لم يُرصد دليل عليها في ملفك المعتمد. اختر منها ما
-                            تريد تطويره. ترتيب القائمة ليس ترتيب أولوية أو متطلبات
-                            سابقة للتعلم.
+                            تريد تطويره. رتّبنا الأساسية لهذا المسمى قبل المهارات
+                            الإضافية، ثم اعرضناها حسب ترتيب الخطة المهنية للمسار.
                         </Text>
 
                         {missing.length === 0 ? (
@@ -100,7 +99,7 @@ export default function RoadmapScreen() {
                                         <Text style={styles.heading}>
                                             مهارة {index + 1}
                                         </Text>
-                                        <Text style={styles.skill}>{item.name}</Text>
+                                        <Text style={styles.skill}>{displaySkillName(item.name)}</Text>
                                         <Text style={styles.english}>
                                             {skill?.description ?? 'الوصف غير متوفر'}
                                         </Text>
@@ -131,8 +130,7 @@ export default function RoadmapScreen() {
                         )}
 
                         <Text style={styles.note}>
-                            بعض المهارات لها تمارين مقترحة مخصصة، والبقية تعرض خطوات عامة.
-                            لم نضف دورات محددة أو مددًا أو اختبار إتقان بعد.
+                            بعض المهارات لها تمارين ومصادر مخصصة، والبقية تعرض خطوات عامة.
                             إكمال التمرين وحده لا يثبت امتلاك المهارة.
                         </Text>
                     </>
