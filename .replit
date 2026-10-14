@@ -63,3 +63,8 @@ externalPort = 3000
 [userenv.shared]
 EMAIL_HOOK_SENDER_ID = "1"
 EMAIL_HOOK_REDIRECT_URLS = "[\"https://7026c07b-53e3-497d-affa-b6aac928fb2c-00-6jtedkfbfatg.pike.replit.dev/auth-callback\",\"masarak://auth-callback\"]"
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["node", "server/email-hook-server.mjs"]
+build = ["bash", "-c", "npm ci && npm --prefix server ci"]
