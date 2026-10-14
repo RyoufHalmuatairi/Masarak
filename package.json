@@ -52,6 +52,8 @@
     "cv-server": "npm --prefix server start",
     "email-hook": "node server/email-hook-server.mjs",
     "test:email-hook": "node --test server/auth-email*.test.mjs",
+    "test:edge-email-hook": "node --test tests/supabase-email-hook.test.mjs",
+    "build:edge-email-hook": "node scripts/build-edge-email-hook.mjs",
     "test:cv-server": "npm --prefix server test"
   },
   "private": true

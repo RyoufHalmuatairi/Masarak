@@ -46,3 +46,9 @@ example
 server/.env
 server/.env.*
 !server/.env.example
+
+# Supabase secrets and generated dashboard source
+supabase/functions/.env
+supabase/functions/.env.*
+!supabase/functions/.env.example
+/generated-artifacts/

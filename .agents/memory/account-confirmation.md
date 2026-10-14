@@ -27,8 +27,8 @@ The user selected Send Email Hook instead of the previously suggested Gmail SMTP
 
 **How to apply:** Implement and verify the hook path without silently reverting to SMTP. Since a hook replaces normal email delivery, preserve password recovery alongside signup OTP delivery, and keep the hook disabled until its sender is configured and tested.
 
-Keep the managed Brevo email hook in the Replit backend rather than assuming the Replit connection can run directly in a Supabase Edge Function.
+Run the email hook as a Supabase Edge Function. The user explicitly chose this path without publishing Masarak or a Replit backend.
 
-**Why:** Replit's connector authenticates using the Replit runtime identity. Moving the hook to Supabase would require a different credential arrangement and duplicate secret provisioning.
+**Why:** The user rejected Replit publishing while the app is incomplete, then approved preparing and running a small email function inside Supabase. Replit's managed Brevo connection depends on the Replit runtime and cannot authenticate this function.
 
-**How to apply:** Reuse the managed connection without extracting its API key. Explain that the backend needs its own stable published HTTPS endpoint, distinct from publishing the native app, and obtain user approval before publishing.
+**How to apply:** Keep Brevo's API key and the hook signing secret in Supabase function secrets, never in the mobile app or chat. Do not extract the managed Replit connector's credentials. Distinguish deploying this explicitly approved email function from publishing the application. Keep the auth hook disabled until its deployed endpoint, sender, and signature configuration have been verified.

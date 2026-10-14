@@ -15,6 +15,12 @@ Do not initiate a publishing setup or suggest publishing while the app is still 
 
 **How to apply:** Keep implementation and local testing separate from external activation. Explain hosting requirements without starting a publishing flow, and wait for an explicit publishing request after readiness has been agreed.
 
+The user separately approved preparing and running the email hook inside Supabase without publishing Masarak.
+
+**Why:** The user selected a Supabase function after its separate cloud setup and Brevo credential requirements were explained.
+
+**How to apply:** This permits that email function's setup only. It does not permit publishing the Replit project, the mobile application, or unrelated services, nor does it establish release readiness.
+
 The user chose to use a newly created Supabase project under a new account rather than the project previously set up by their teammate.
 
 **Why:** The user approved starting with a new Supabase project while retaining the application code.
