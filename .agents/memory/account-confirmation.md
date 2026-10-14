@@ -20,3 +20,9 @@ The project team has an email account but no owned domain.
 **Why:** The user explicitly stated this when choosing how to send verification emails.
 
 **How to apply:** Do not assume access to domain verification or DNS settings when recommending a mail service. Distinguish a limited testing setup from a release-ready sender.
+
+The user selected Send Email Hook instead of the previously suggested Gmail SMTP setup.
+
+**Why:** The user explicitly chose to implement the hook shown in their Supabase dashboard.
+
+**How to apply:** Implement and verify the hook path without silently reverting to SMTP. Since a hook replaces normal email delivery, preserve password recovery alongside signup OTP delivery, and keep the hook disabled until its sender is configured and tested.
