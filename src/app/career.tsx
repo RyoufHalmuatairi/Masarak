@@ -9,27 +9,30 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSkillProfile } from '../hooks/use-skill-profile';
+import { usePersonalProfile } from '../hooks/use-personal-profile';
+import { useLearningProgress } from '../hooks/use-learning-progress';
+import { useProfessionalCertifications } from '../hooks/use-professional-certifications';
+import { useLearningPlan } from '../hooks/use-learning-plan';
 import dataset from '../masarak_dataset.json';
-import { getSkillGapReport, readinessLabels } from '../utils/skill-gap';
-
-const titles: Record<string, string> = {
-    C01: 'مهندس برمجيات',
-    C02: 'محلل بيانات',
-    C03: 'عالم بيانات وذكاء اصطناعي',
-    C04: 'مهندس ذكاء اصطناعي وتعلم آلة',
-    C05: 'محلل أمن سيبراني',
-    C06: 'مهندس شبكات',
-};
+import { getSkillGapReport, readinessLabels, readinessLevel } from '../utils/skill-gap';
+import { certificationsByIds } from '../constants/professional-certifications';
+import { calculateCareerReadiness } from '../utils/career-readiness';
+import { displaySkillName } from '../utils/skill-labels';
+import { jobPathById } from '../constants/job-paths';
+import { jobPathRequirementProfile, requirementsForCareerPath } from '../constants/job-path-requirements';
+import { certificationPlanId, experiencePlanId, projectPlanId } from '../utils/learning-plan';
 
 export default function CareerScreen() {
     const router = useRouter();
     const { profile, ready: profileLoaded, error: profileError } = useSkillProfile();
+    const personalState = usePersonalProfile();
+    const learningProgress = useLearningProgress();
+    const certificationState = useProfessionalCertifications();
+    const learningPlan = useLearningPlan();
     const savedSkills = profile?.skill_ids ?? null;
     const cvSkills = new Set(profile?.cv?.skills.flatMap(skill => skill.mapped_skill_id && !profile.excluded_cv_skill_ids.includes(skill.mapped_skill_id) ? [skill.mapped_skill_id] : []) ?? []);
     const params = useLocalSearchParams<{ id?: string }>();
-    const career = dataset.careers.find(
-        (item) => item.career_id === params.id
-    );
+    const career = jobPathById(params.id);
 
     if (!career) {
         return (
@@ -44,11 +47,19 @@ export default function CareerScreen() {
         );
     }
 
-    const requirements = dataset.career_skills.filter(
-        (item) => item.career_id === career.career_id
-    );
+    const requirements = requirementsForCareerPath(career.id);
+    const roleProfile = jobPathRequirementProfile(career.id);
+    const roleCertifications = certificationsByIds(roleProfile?.certificationIds ?? []);
     // An empty skill list means no saved skills, same as the home screen.
-    const gap = getSkillGapReport(career.career_id, savedSkills?.length ? savedSkills : null);
+    const gap = getSkillGapReport(career.id, savedSkills?.length ? savedSkills : null);
+    const readiness = calculateCareerReadiness(career.id, {
+        skillProfile: profile,
+        personal: personalState.personal,
+        learningProgress: learningProgress.progress,
+        professionalCertifications: certificationState.achieved,
+    });
+    const readinessLoaded = profileLoaded && personalState.ready && learningProgress.ready && certificationState.ready;
+    const level = readinessLevel(readiness.score);
 
     return (
         <SafeAreaView style={styles.screen}>
@@ -64,15 +75,15 @@ export default function CareerScreen() {
                 </Pressable>
 
                 <Text style={styles.title}>
-                    {titles[career.career_id] ?? career.title}
+                    {career.title}
                 </Text>
-                <Text style={styles.english}>{career.title}</Text>
+                <Text style={styles.english}>{career.majors.join(' · ')}</Text>
                 <Pressable
                     accessibilityRole="button"
                     onPress={() =>
                         router.push({
                             pathname: '/roadmap',
-                            params: { id: career.career_id },
+                            params: { id: career.id },
                         })
                     }
                 >
@@ -80,29 +91,36 @@ export default function CareerScreen() {
                 </Pressable>
 
                 <View style={styles.card}>
-                    <Text style={styles.heading}>جاهزيتك المبدئية وفق تغطية المهارات</Text>
+                    <Text style={styles.heading}>جاهزيتك المركبة لهذا المسار</Text>
 
-                    {gap.score === null || gap.level === null ? (
+                    {!readinessLoaded ? (
+                        <Text style={styles.note}>جارٍ جمع أدلة ملفك…</Text>
+                    ) : readiness.score === null || level === null ? (
                         <Text style={styles.note}>
-                            اعتمد سيرتك أو أضف مهاراتك من ملفك لنحسب جاهزيتك
+                            أضف بياناتك أو اعتمد سيرتك لنحسب الجاهزية
                         </Text>
                     ) : (
                         <>
-                            <Text style={styles.title}>{gap.score}%</Text>
+                            <Text style={styles.title}>{readiness.score}%</Text>
                             <Text style={styles.skillName}>
-                                {readinessLabels[gap.level]}
+                                {readinessLabels[level]}
                             </Text>
-                            <Text style={styles.note}>
-                                وثّقت {gap.matchedCore.length} من{' '}
-                                {gap.matchedCore.length + gap.missingCore.length} مهارة أساسية
-                            </Text>
+                            {([
+                                ['المهارات الموثقة', readiness.breakdown.skills, readiness.weights.skills],
+                                ['المشاريع والخبرة', readiness.breakdown.practical, readiness.weights.practical],
+                                ['الشهادات المهنية', readiness.breakdown.certifications, readiness.weights.certifications],
+                                ['المؤهل والمعدل', readiness.breakdown.academic, readiness.weights.academic],
+                                ['الدورات المكتملة', readiness.breakdown.learning, readiness.weights.learning],
+                            ] as const).map(([label, earned, maximum]) => <View key={label} style={styles.breakdown}><Text style={styles.note}>{label}</Text><Text style={styles.points}>{earned} / {maximum}</Text></View>)}
+                            <Text style={styles.note}>وثّقت {gap.matchedCore.length} من {gap.matchedCore.length + gap.missingCore.length} مهارة أساسية. الدورات والشهادات المعلّمة مكتملة ذاتيًا، وتحتاج مستندًا عند التقديم الفعلي.</Text>
+                            <Text style={styles.note}>احتسبنا للمسار {readiness.evidence.projects} من {readiness.evidence.totalProjects} مشاريع، و{readiness.evidence.experiences} من {readiness.evidence.totalExperiences} خبرات؛ لأن الحسبة تقبل الدليل المرتبط بكلمات ومهام هذا المسار فقط.</Text>
 
                             {gap.missingCore.length > 0 && (
                                 <>
                                     <Text style={styles.skillName}>مهارات أساسية لم تُوثّق بعد</Text>
                                     {gap.missingCore.map((skill) => (
                                         <Text key={skill.skill_id} style={styles.note}>
-                                            • {skill.name}
+                                            • {displaySkillName(skill.name)}
                                         </Text>
                                     ))}
                                 </>
@@ -110,6 +128,45 @@ export default function CareerScreen() {
                         </>
                     )}
                 </View>
+
+                <View style={styles.card}>
+                    <Text style={styles.heading}>الشهادات المهنية المقترحة</Text>
+                    <Text style={styles.note}>هذه خيارات بديلة؛ تكفي شهادة واحدة مرتبطة بالمسار لنقاط الشهادات. اختر «حصلت عليها» فقط بعد اجتياز الاختبار وصدور الشهادة باسمك. التحضير أو إكمال دورة لا يعني الحصول على الشهادة.</Text>
+                    {certificationState.error ? <Pressable onPress={() => void certificationState.reload()}><Text style={styles.link}>{certificationState.error} اضغط لإعادة التحميل.</Text></Pressable> : null}
+                    {roleCertifications.map(certificate => {
+                        const achieved = certificationState.achieved.includes(certificate.id);
+                        return <View key={certificate.id} style={styles.certificate}>
+                            <Text style={styles.skillName}>{certificate.title}</Text>
+                            <Text style={styles.note}>{certificate.provider} · {certificate.level}</Text>
+                            <Text style={styles.note}>{certificate.cost}</Text>
+                            <Text style={styles.note}>{certificate.note}</Text>
+                            <Pressable accessibilityRole="link" onPress={() => void Linking.openURL(certificate.url)}><Text style={styles.link}>صفحة الشهادة الرسمية</Text></Pressable>
+                            <Pressable accessibilityRole="button" disabled={!learningPlan.ready || learningPlan.busy} style={styles.certButton} onPress={() => void learningPlan.change(certificationPlanId(certificate.id), !learningPlan.plan.includes(certificationPlanId(certificate.id)))}><Text style={styles.certButtonText}>{learningPlan.plan.includes(certificationPlanId(certificate.id)) ? '✓ في خطة تعلمي — إزالة' : '＋ أضف الشهادة إلى خطة تعلمي'}</Text></Pressable>
+                            <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: achieved, disabled: !certificationState.ready || certificationState.busy }} disabled={!certificationState.ready || certificationState.busy} style={[styles.certButton, achieved && styles.certButtonDone]} onPress={() => void certificationState.change(certificate.id, !achieved)}><Text style={styles.certButtonText}>{achieved ? '✓ حصلت على هذه الشهادة' : '□ حصلت على هذه الشهادة'}</Text></Pressable>
+                        </View>;
+                    })}
+                </View>
+
+                {roleProfile ? (
+                    <View style={styles.card}>
+                        <Text style={styles.heading}>ما يحتاجه هذا المسمى تحديدًا</Text>
+                        <Text style={styles.skillName}>المؤهل الجامعي المناسب</Text>
+                        <Text style={styles.note}>{roleProfile.education}</Text>
+                        <Text style={styles.skillName}>الخبرة العملية</Text>
+                        <Text style={styles.note}>{roleProfile.experience}</Text>
+                        <Pressable accessibilityRole="button" disabled={!learningPlan.ready || learningPlan.busy} style={styles.certButton} onPress={() => void learningPlan.change(experiencePlanId(career.id), !learningPlan.plan.includes(experiencePlanId(career.id)))}><Text style={styles.certButtonText}>{learningPlan.plan.includes(experiencePlanId(career.id)) ? '✓ الخبرة في خطتي — إزالة' : '＋ أضف الخبرة المطلوبة إلى خطتي'}</Text></Pressable>
+                        <Text style={styles.skillName}>مشاريع تثبت الجاهزية</Text>
+                        {roleProfile.projects.map((project, index) => <View key={project} style={styles.certificate}><Text style={styles.note}>• {project}</Text><Pressable accessibilityRole="button" disabled={!learningPlan.ready || learningPlan.busy} style={styles.certButton} onPress={() => void learningPlan.change(projectPlanId(career.id, index), !learningPlan.plan.includes(projectPlanId(career.id, index)))}><Text style={styles.certButtonText}>{learningPlan.plan.includes(projectPlanId(career.id, index)) ? '✓ المشروع في خطتي — إزالة' : '＋ أضف المشروع إلى خطتي'}</Text></Pressable></View>)}
+                        <Text style={styles.skillName}>الشهادة المهنية</Text>
+                        <Text style={styles.note}>{roleCertifications.length ? 'اختيارية ومساندة. اختاري واحدة مرتبطة بالأداة أو البيئة التي تستهدفينها؛ لا يلزم جمعها كلها.' : 'لا توجد شهادة مهنية عامة ذات أولوية لهذا المسمى في مرحلة الخريج؛ المشروع العملي أقوى.'}</Text>
+                        {roleProfile.sources.map(source => (
+                            <Pressable key={source.url} accessibilityRole="link" onPress={() => void Linking.openURL(source.url)}>
+                                <Text style={styles.link}>{source.label}</Text>
+                            </Pressable>
+                        ))}
+                        <Text style={styles.note}>هذه معلومات إرشادية عامة، وإعلان الوظيفة المستهدف هو المرجع النهائي. الشهادة والدليل العملي يدخلان في الجاهزية المركبة كبندين منفصلين، ولا يغيران نسبة تغطية المهارات الأساسية.</Text>
+                    </View>
+                ) : null}
 
                 {(['core', 'additional'] as const).map((priority) => (
                     <View key={priority} style={styles.section}>
@@ -128,7 +185,8 @@ export default function CareerScreen() {
 
                                 return (
                                     <View key={item.skill_id} style={styles.card}>
-                                        <Text style={styles.skillName}>{item.name}</Text>
+                                        <Text style={styles.skillName}>{displaySkillName(item.name)}</Text>
+                                        <Text style={styles.note}>{priority === 'core' && 'priority_rank' in item ? (item.priority_rank <= 2 ? 'أولوية مرتفعة في هذا المسمى' : item.priority_rank <= 4 ? 'أولوية أساسية' : 'أساسية بعد إتقان الأولويات الأعلى') : 'مهارة إضافية بعد الأساسيات'}</Text>
                                         <Text style={styles.note}>
                                             {!profileLoaded
                                                 ? 'جارٍ تحميل ملف مهاراتك…'
@@ -144,6 +202,7 @@ export default function CareerScreen() {
                                         <Text style={styles.english}>
                                             {skill?.description ?? 'الوصف غير متوفر'}
                                         </Text>
+                                        {!savedSkills?.includes(item.skill_id) ? <Pressable accessibilityRole="button" disabled={!learningPlan.ready || learningPlan.busy} style={styles.certButton} onPress={() => void learningPlan.change(item.skill_id, !learningPlan.plan.includes(item.skill_id))}><Text style={styles.certButtonText}>{learningPlan.plan.includes(item.skill_id) ? '✓ المهارة في خطتي — إزالة' : '＋ أضف المهارة إلى خطة تعلمي'}</Text></Pressable> : null}
                                         <Pressable
                                             accessibilityRole="link"
                                             onPress={() => {
@@ -229,4 +288,10 @@ const styles = StyleSheet.create({
         lineHeight: 27,
         textAlign: 'right',
     },
+    breakdown: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+    points: { color: '#12635E', fontSize: 15, fontWeight: '700' },
+    certificate: { backgroundColor: '#F8F9F5', borderWidth: 1, borderColor: '#DDE6E0', borderRadius: 14, padding: 16, gap: 7 },
+    certButton: { borderWidth: 1, borderColor: '#12635E', borderRadius: 12, padding: 12, minHeight: 46, justifyContent: 'center' },
+    certButtonDone: { backgroundColor: '#E5F3EE' },
+    certButtonText: { color: '#12635E', fontSize: 15, fontWeight: '600', textAlign: 'center' },
 });

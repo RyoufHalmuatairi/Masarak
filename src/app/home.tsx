@@ -9,21 +9,30 @@ import { CareerCard } from '../components/career-card';
 import { colors, ui } from '../constants/design';
 import { useSkillProfile } from '../hooks/use-skill-profile';
 import { useLearningPlan } from '../hooks/use-learning-plan';
-import { careerTitles, getCareerMatches } from '../utils/career-matches';
+import { careerTitles } from '../utils/career-matches';
+import { usePersonalProfile } from '../hooks/use-personal-profile';
+import { useLearningProgress } from '../hooks/use-learning-progress';
+import { useProfessionalCertifications } from '../hooks/use-professional-certifications';
+import { getCareerReadinessMatches } from '../utils/career-readiness';
 
 export default function HomeScreen() {
   const router = useRouter();
   const auth = useAuth();
-  const firstName = typeof auth.session?.user.user_metadata?.display_name === 'string' ? auth.session.user.user_metadata.display_name.trim().split(/\s+/)[0].slice(0, 25) : '';
+  const personalState = usePersonalProfile();
+  const personal = personalState.personal;
+  const courseProgress = useLearningProgress();
+  const professionalCertifications = useProfessionalCertifications();
+  const firstName = personal?.name ? personal.name.trim().split(/\s+/)[0].slice(0, 25) : typeof auth.session?.user.user_metadata?.display_name === 'string' ? auth.session.user.user_metadata.display_name.trim().split(/\s+/)[0].slice(0, 25) : '';
   const { profile, ready, error } = useSkillProfile();
   const learning = useLearningPlan();
-  const hasSkills = ready && !error && !!profile?.skill_ids.length;
-  const matches = getCareerMatches(hasSkills ? profile!.skill_ids : null);
+  const matches = getCareerReadinessMatches({ skillProfile: profile, personal, learningProgress: courseProgress.progress, professionalCertifications: professionalCertifications.achieved });
   const best = matches[0];
+  const readinessReady = ready && personalState.ready && courseProgress.ready && professionalCertifications.ready;
   const tools = [
     { title: profile?.cv ? 'سيرتي الذاتية' : 'رفع السيرة', subtitle: profile?.cv ? 'راجع معلوماتك المحفوظة' : 'خطوتك الأولى تبدأ هنا', route: '/upload-cv', icon: 'upload' },
     { title: 'تحليل المهارات', subtitle: 'اكتشف المسارات ومهاراتها', route: '/careers', icon: 'careers' },
-    { title: 'خطة التعلم', subtitle: learning.ready && !learning.error ? `${learning.plan.length} مهارات في خطتك` : 'خطواتك نحو التطور', route: '/learning-plan', icon: 'plan' },
+    { title: 'تخصصات الجامعة', subtitle: 'وظائف ومهارات وشهادات كل تخصص', route: '/majors', icon: 'careers' },
+    { title: 'خطة التعلم', subtitle: learning.ready && !learning.error ? `${learning.plan.length} عناصر في خطتك` : 'خطواتك نحو التطور', route: '/learning-plan', icon: 'plan' },
     { title: 'ملف مهاراتي', subtitle: 'راجع مهاراتك وأضف إليها', route: '/profile', icon: 'profile' },
   ] as const;
   return <SafeAreaView edges={['top', 'left', 'right']} style={ui.screen}>
@@ -32,15 +41,15 @@ export default function HomeScreen() {
       <View style={styles.intro}><Text style={ui.eyebrow}>خطوتك اليوم، مستقبلك بكرة</Text><Text style={ui.title}>{firstName ? `أهلًا بك، ${firstName}.` : 'أهلًا بك في مسارك.'}</Text><Text style={ui.text}>طريق أوضح لمستقبلك في عالم التقنية.</Text></View>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <View style={styles.summary}>
-        <View style={styles.summaryText}><Text style={ui.eyebrow}>تغطية المهارات الأساسية</Text><Text style={styles.number}>{!ready ? '…' : hasSkills ? `${best.score}%` : 'لنبدأ'}</Text><Text style={styles.summaryCaption}>{!ready ? 'جارٍ تحميل ملفك…' : hasSkills ? careerTitles[best.career_id] : 'حلّل سيرتك لاكتشاف مساراتك'}</Text><Text style={ui.note}>{hasSkills ? 'أعلى تغطية بين المسارات الحالية' : 'نتائجك تظهر بعد اعتماد مهاراتك'}</Text></View>
-        <CoverageRing score={hasSkills ? best.score : null} />
+        <View style={styles.summaryText}><Text style={ui.eyebrow}>الجاهزية المركبة</Text><Text style={styles.number}>{!readinessReady ? '…' : best.score !== null ? `${best.score}%` : 'لنبدأ'}</Text><Text style={styles.summaryCaption}>{!readinessReady ? 'جارٍ جمع أدلة ملفك…' : best.score !== null ? careerTitles[best.career_id] : 'أكمل ملفك لاكتشاف مساراتك'}</Text><Text style={ui.note}>{best.score !== null ? 'مهارات + تطبيق + شهادات + معدل + تعلم' : 'نتائجك تظهر بعد إضافة أي دليل'}</Text></View>
+        <CoverageRing score={readinessReady ? best.score : null} />
       </View>
       <View style={ui.row}><Text style={ui.heading}>أدوات رحلتك</Text><Text style={ui.note}>خطوة بخطوة</Text></View>
       <View style={styles.grid}>{tools.map(tool => <Pressable key={tool.route} accessibilityRole="button" onPress={() => router.push(tool.route)} style={({ pressed }) => [styles.tool, pressed && ui.pressed]}><View style={styles.toolIcon}><MasarakIcon name={tool.icon as IconName} /></View><Text style={styles.toolTitle}>{tool.title}</Text><Text style={styles.toolText}>{tool.subtitle}</Text></Pressable>)}</View>
       <View style={styles.next}><View style={styles.nextText}><Text style={styles.nextTitle}>{profile?.cv ? 'ملفك جاهز للخطوة التالية' : 'كل رحلة تبدأ بخطوة'}</Text><Text style={ui.text}>{profile?.cv ? 'استكشف مهارات المسارات واختر ما تريد تطويره.' : 'ارفع سيرتك، راجع التحليل، ثم اكتشف المسارات المرتبطة بمهاراتك.'}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={profile?.cv ? 'استكشاف المسارات' : 'رفع السيرة الذاتية'} onPress={() => router.push(profile?.cv ? '/careers' : '/upload-cv')} style={styles.nextButton}><MasarakIcon name="arrow" color={colors.surface} /></Pressable></View>
-      <View style={ui.row}><Text style={ui.heading}>{hasSkills ? 'مسارات مرتبطة بمهاراتك' : 'اكتشف مسارات التقنية'}</Text><Pressable accessibilityRole="button" onPress={() => router.push('/careers')}><Text style={ui.link}>عرض الكل</Text></Pressable></View>
+      <View style={ui.row}><Text style={ui.heading}>{best.score !== null ? 'مساراتك حسب الجاهزية' : 'اكتشف مسارات التقنية'}</Text><Pressable accessibilityRole="button" onPress={() => router.push('/careers')}><Text style={ui.link}>عرض الكل</Text></Pressable></View>
       {matches.slice(0, 2).map(career => <CareerCard key={career.career_id} career={career} />)}
-      <Text style={ui.note}>النسبة تصف تغطية المهارات الأساسية في النسخة التجريبية؛ لا تقيس الإتقان أو الجاهزية للتوظيف. المسارات المتساوية لها نفس التغطية.</Text>
+      <Text style={ui.note}>الجاهزية تقدير إرشادي من أدلة ملفك وليست احتمال قبول أو ضمان توظيف. افتح المسار لرؤية النقاط والأوزان.</Text>
     </ScrollView>
   </SafeAreaView>;
 }

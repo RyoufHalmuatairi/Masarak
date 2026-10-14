@@ -2,7 +2,7 @@ import type { DocumentPickerAsset } from 'expo-document-picker';
 import { isCvAnalysis, type CvAnalysis } from './skill-profile';
 
 export type CvReview = { analysis: CvAnalysis; skills: number[]; certificates: number[]; experiences: number[]; education?: number[]; projects?: number[]; activities?: number[] };
-export type SavedCv = { asset: DocumentPickerAsset; review: CvReview | null };
+export type SavedCv = { file_id?: string; asset: DocumentPickerAsset; review: CvReview | null };
 export function validReview(value: unknown): value is CvReview {
   if (!value || typeof value !== 'object') return false;
   const review = value as CvReview;

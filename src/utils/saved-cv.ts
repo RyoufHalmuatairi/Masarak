@@ -1,4 +1,4 @@
-import AsyncStorage, { captureDataScope } from './scoped-storage';
+import AsyncStorage, { captureDataScope, replaceScopedItems } from './scoped-storage';
 import { Directory, File, Paths } from 'expo-file-system';
 import type { DocumentPickerAsset } from 'expo-document-picker';
 import { validateCvFile } from './cv-file';
@@ -24,7 +24,7 @@ async function readRecord(): Promise<SavedCv | null> {
   const parsed = JSON.parse(raw) as SavedCv;
   if (!parsed?.asset || typeof parsed.asset.uri !== 'string' || typeof parsed.asset.name !== 'string' || validateCvFile(parsed.asset) || (parsed.review !== null && !validReview(parsed.review))) throw new Error('Invalid saved CV');
   if (!ownedFile(parsed.asset.uri).exists) throw new Error('ملف السيرة المحفوظ غير متوفر. اختر نسخة جديدة.');
-  return parsed;
+  return { ...parsed, file_id: parsed.file_id ?? parsed.asset.uri };
 }
 export function loadSavedCv(): Promise<SavedCv | null> { return serialize(readRecord); }
 
@@ -39,7 +39,7 @@ export function storeCvFile(asset: DocumentPickerAsset): Promise<SavedCv> {
     const prior = await AsyncStorage.getItem(key);
     await new File(asset.uri).copy(destination);
     try { scope.assertCurrent(); } catch (error) { if (destination.exists) destination.delete(); throw error; }
-    const saved: SavedCv = { asset: { uri: destination.uri, name: asset.name, size: asset.size, mimeType: asset.mimeType, lastModified: asset.lastModified }, review: null };
+    const saved: SavedCv = { file_id: destination.uri, asset: { uri: destination.uri, name: asset.name, size: asset.size, mimeType: asset.mimeType, lastModified: asset.lastModified }, review: null };
     try { await AsyncStorage.setItem(key, JSON.stringify(saved)); }
     catch (error) { if (destination.exists) destination.delete(); throw error; }
     if (prior) {
@@ -68,4 +68,26 @@ export function deleteSavedCv(): Promise<void> {
     }
     await AsyncStorage.removeItem(key);
   });
+}
+
+// Stage the new bytes without deleting the previous file; the caller commits the whole account snapshot.
+export async function prepareSavedCvRestore(asset: DocumentPickerAsset | null, review: CvReview | null) {
+  const scope = captureDataScope();
+  const prior = await readRecord(); scope.assertCurrent();
+  let destination: File | null = null;
+  let saved: SavedCv | null = null;
+  if (asset) {
+    const problem = validateCvFile(asset); if (problem) throw new Error(problem);
+    const directory = cvDirectory(); directory.create({ idempotent: true, intermediates: true });
+    destination = new File(directory, `cv-cloud-${Date.now()}-${Math.random().toString(36).slice(2)}.${asset.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx'}`);
+    await new File(asset.uri).copy(destination);
+    try { scope.assertCurrent(); } catch (error) { if (destination.exists) destination.delete(); throw error; }
+    saved = { file_id: destination.uri, asset: { uri: destination.uri, name: asset.name, size: asset.size, mimeType: asset.mimeType, lastModified: asset.lastModified }, review };
+  }
+  const rollbackScope = { ...scope, assertCurrent: () => {} };
+  return {
+    commit: async () => { scope.assertCurrent(); await replaceScopedItems([[key, saved ? JSON.stringify(saved) : null]], scope); return saved; },
+    rollback: async () => { await replaceScopedItems([[key, prior ? JSON.stringify(prior) : null]], rollbackScope); if (destination?.exists) destination.delete(); },
+    finish: async () => { if (prior && prior.asset.uri !== saved?.asset.uri) { const old = new File(prior.asset.uri); if (old.exists) old.delete(); } },
+  };
 }
