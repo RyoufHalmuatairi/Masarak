@@ -38,3 +38,9 @@ Brevo event lookups may require the recipient's canonical casing, even when deli
 **Why:** Filtering a Gmail recipient with mixed casing returned no matching events; the lowercase lookup found the matching request and delivery events. An empty first lookup was not evidence of failed delivery.
 
 **How to apply:** For Gmail, try the lowercase address in read-only event queries and correlate recipient, subject, time, and message ID. Do not automatically resend because an event lookup is empty. Do not assume all providers' mailbox local parts can safely be lowercased.
+
+Authentication emails should use the sender display name **مسارك | Masarak**.
+
+**Why:** The user confirmed receipt of the test message but explicitly wanted the application brand instead of the account's previous display name.
+
+**How to apply:** Preserve the existing sender email address and verification. Adjust the existing sender's display name rather than creating another sender or changing authentication.
