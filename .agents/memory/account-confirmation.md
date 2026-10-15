@@ -32,3 +32,9 @@ Run the email hook as a Supabase Edge Function. The user explicitly chose this p
 **Why:** The user rejected Replit publishing while the app is incomplete, then approved preparing and running a small email function inside Supabase. Replit's managed Brevo connection depends on the Replit runtime and cannot authenticate this function.
 
 **How to apply:** Keep Brevo's API key and the hook signing secret in Supabase function secrets, never in the mobile app or chat. Do not extract the managed Replit connector's credentials. Distinguish deploying this explicitly approved email function from publishing the application. Keep the auth hook disabled until its deployed endpoint, sender, and signature configuration have been verified.
+
+Brevo event lookups may require the recipient's canonical casing, even when delivery succeeded.
+
+**Why:** Filtering a Gmail recipient with mixed casing returned no matching events; the lowercase lookup found the matching request and delivery events. An empty first lookup was not evidence of failed delivery.
+
+**How to apply:** For Gmail, try the lowercase address in read-only event queries and correlate recipient, subject, time, and message ID. Do not automatically resend because an event lookup is empty. Do not assume all providers' mailbox local parts can safely be lowercased.
