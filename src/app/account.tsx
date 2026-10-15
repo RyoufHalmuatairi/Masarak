@@ -28,7 +28,9 @@ export default function AccountScreen() {
   const [now, setNow] = useState(Date.now);
   const resendSeconds = signupResendSeconds(resendAvailableAt, now);
   const locked = useRef(false);
-  useEffect(() => { if (auth.session) router.replace('/home'); }, [auth.session, router]);
+  useEffect(() => {
+    if (auth.ready && auth.session && !auth.callbackBusy) router.replace(auth.recoveryPending ? '/reset-password' : '/home');
+  }, [auth.ready, auth.session, auth.callbackBusy, auth.recoveryPending, router]);
   useEffect(() => {
     if (!verification) return;
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -57,6 +59,7 @@ export default function AccountScreen() {
       } else {
         const result = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
         if (result.error) throw result.error;
+        if (!result.data?.session) throw new Error('No authenticated session returned');
         setPassword('');
         auth.completeLogin();
       }

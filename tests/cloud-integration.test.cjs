@@ -192,3 +192,14 @@ test('a guest cannot create a cloud request and cloud errors never echo credenti
   await assert.rejects(runtime.createCloudRuntime(() => null, () => {}).sync()); assert.equal(h.clients.length, before);
   assert.equal(runtime.cloudErrorMessage({ code: 'PGRST205', message: 'PRIVATE_TEST_SECRET' }).includes('PRIVATE_TEST_SECRET'), false);
 });
+
+test('temporary cloud clients never reuse the login client auth storage namespace', () => {
+  const h = harness(), sdk = h.load('supabase.ts');
+  const first = sdk.createAccountClient({ access_token: 'FIXTURE_A', user: { id: 'A' } });
+  const second = sdk.createAccountClient({ access_token: 'FIXTURE_B', user: { id: 'B' } });
+  assert.notEqual(first.options.auth.storageKey, second.options.auth.storageKey);
+  assert.equal(first.options.auth.persistSession, false);
+  assert.equal(second.options.auth.persistSession, false);
+  assert.equal(first.options.global.headers.Authorization, 'Bearer FIXTURE_A');
+  assert.equal(second.options.global.headers.Authorization, 'Bearer FIXTURE_B');
+});

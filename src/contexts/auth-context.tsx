@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const client = supabase;
     const subscription = client?.auth.onAuthStateChange((_event, next) => {
       revision += 1;
+      if (active && _event === 'PASSWORD_RECOVERY') setRecoveryPending(true);
       if (active && initialized.current && _event !== 'INITIAL_SESSION') acceptSession(next);
     }).data.subscription;
     const load = async () => {
@@ -71,16 +72,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const consumeLink = async () => {
       await Promise.resolve();
       let parsed;
-      try { parsed = parseAuthLink(incomingUrl); }
+      try {
+        parsed = parseAuthLink(incomingUrl, () => {
+          if (Platform.OS === 'web' && typeof window !== 'undefined') {
+            cleanedLink.current = window.location.origin + window.location.pathname;
+            window.history.replaceState(window.history.state, '', window.location.pathname);
+          }
+        });
+      }
       catch (failure) { setCallbackError(failure instanceof Error ? failure.message : 'تعذر تأكيد الرابط.'); return; }
       if (!parsed) return;
       lastLink.current = incomingUrl;
       setCallbackBusy(true); setCallbackError(''); setRecoveryPending(parsed.recovery);
-      // Remove browser credentials from the address bar before any async work.
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        cleanedLink.current = window.location.origin + window.location.pathname;
-        window.history.replaceState(window.history.state, '', window.location.pathname);
-      }
       try {
         if (!supabase) throw new Error('الحسابات غير متاحة حاليًا.');
         const result = await supabase.auth.setSession({ access_token: parsed.access_token, refresh_token: parsed.refresh_token });

@@ -20,7 +20,7 @@ function harness(mode = 'signup') {
     signUp: async options => { calls.signup.push(options); return { error: null, data: { session: null } }; },
     verifyOtp: async options => { calls.verify.push(options); return { error: null, data: { session: { user: { id: 'fixture-user' } } } }; },
     resend: async options => { calls.resend.push(options); return { error: null }; },
-    signInWithPassword: async options => { calls.login.push(options); return { error: null, data: {} }; },
+    signInWithPassword: async options => { calls.login.push(options); return { error: null, data: { session: { user: { id: 'fixture-user' } } } }; },
   };
   const auth = { session: null, configured: true, completeLogin: () => completed++ };
   const jsx = (type, props) => ({ type, props });
@@ -86,6 +86,15 @@ async function signup(h) {
   await h.press('إنشاء حساب');
 }
 
+test('a login response without a session never completes login', async () => {
+  const h = harness('login');
+  h.api.signInWithPassword = async () => ({ error: null, data: { session: null } });
+  h.fill('البريد الإلكتروني', 'user@example.test');
+  h.fill('كلمة المرور', 'fixture-password');
+  await h.press('تسجيل الدخول');
+  assert.equal(h.completed(), 0);
+});
+
 test('new signup displays a six-digit input and verifies before completing login', async () => {
   const h = harness();
   await signup(h);
@@ -148,7 +157,7 @@ test('unconfirmed users can resume confirmation, while ordinary login stays pass
   assert.equal(h.calls.resend.length, 1);
   await h.press('العودة لتسجيل الدخول');
   h.fill('كلمة المرور', 'fixture-password');
-  h.api.signInWithPassword = async options => { h.calls.login.push(options); return { error: null }; };
+  h.api.signInWithPassword = async options => { h.calls.login.push(options); return { error: null, data: { session: { user: { id: 'fixture-user' } } } }; };
   await h.press('تسجيل الدخول');
   assert.equal(h.calls.login.length, 1);
   assert.equal(h.calls.verify.length, 0);

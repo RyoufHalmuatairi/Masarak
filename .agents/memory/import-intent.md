@@ -5,9 +5,9 @@ description: User's stated project completion goal and intended release platform
 
 The user initially imported Masarak for experimentation and modifications. The current goal is to complete the full scope in the project report, fix existing issues, implement the missing features, test the whole product, and prepare it for release on iOS and Android.
 
-**Why:** The user explicitly set the full report as the target and selected iOS and Android as the launch platforms.
+**Why:** The user explicitly set the full report as the target, selected iOS and Android, and required one bounded task at a time with a saved version and result before moving on, rather than scope expansion or treating source code as proof of hosted activation.
 
-**How to apply:** Work incrementally against the report, preserve the current stack unless an agreed technical need requires a change, and do not describe the app as release-ready until the features, security, mobile builds, and tests have been verified.
+**How to apply:** Use saved acceptance criteria, implement only the current bounded task, verify it, save the changes, report the result, and stop before the next task. Distinguish local test evidence from live provider/database and device verification; leave unverified criteria open. Preserve the current stack unless an agreed technical need requires a change, and do not describe the app as release-ready until the features, security, mobile builds, and tests have been verified.
 
 Do not initiate a publishing setup or suggest publishing while the app is still incomplete, including a backend-only publishing step for an unfinished feature.
 

@@ -11,10 +11,11 @@ export const supabase = authConfigured ? createClient(url, key, {
 }) : null;
 
 // A request keeps its original identity even if the global SDK session changes mid-flight.
+let requestClientNumber = 0;
 export function createAccountClient(session: import('@supabase/supabase-js').Session, parentSignal?: AbortSignal) {
   if (!authConfigured || !session.access_token) throw new Error('Account client unavailable');
   return createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    auth: { storageKey: `masarak-request-client-${++requestClientNumber}`, persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     global: {
       headers: { Authorization: `Bearer ${session.access_token}` },
       fetch: async (input, init) => {
