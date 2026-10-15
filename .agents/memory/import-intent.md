@@ -26,3 +26,9 @@ The user chose to use a newly created Supabase project under a new account rathe
 **Why:** The user approved starting with a new Supabase project while retaining the application code.
 
 **How to apply:** Configure and verify the new project independently. Do not assume old users or data have migrated, and do not delete or modify the teammate's project.
+
+Git operations must remain local. Never push, pull, synchronize with, or connect to GitHub.
+
+**Why:** The user explicitly set this as a permanent project constraint.
+
+**How to apply:** Use local status, diffs and commits only; do not call GitHub integrations or remote Git operations. Disable Git hooks for local commits so a hook cannot trigger an unintended remote operation.

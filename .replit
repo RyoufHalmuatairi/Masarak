@@ -27,7 +27,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "EXPO_UNSTABLE_HEADLESS=1 npx expo start --web --host lan --port 5000"
+args = "EXPO_PACKAGER_PROXY_URL=\"https://$REPLIT_DEV_DOMAIN\" EXPO_UNSTABLE_HEADLESS=1 npx expo start --web --host lan --port 5000"
 waitForPort = 5000
 
 [[ports]]
