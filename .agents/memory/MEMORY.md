@@ -2,3 +2,4 @@
 - [Account confirmation scope](account-confirmation.md) — Six-digit email code confirms new accounts only; ordinary login remains password-based.
 - [Protected Replit configuration](replit-configuration.md) — Structural .replit edits require validated replacement, not direct patches.
 - [Expo proxy environment](expo-proxy.md) — The public origin must reach Expo before dotenv; verify generated native URLs, not just the web preview.
+- [CV development boundary](cv-development-boundary.md) — Development HTTPS connectivity does not authorize wider CORS, a public backend listener, or sending a CV.

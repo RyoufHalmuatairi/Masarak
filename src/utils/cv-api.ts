@@ -8,7 +8,14 @@ import { supabase } from './supabase';
 
 function serverUrl() {
   const configured = process.env.EXPO_PUBLIC_CV_API_URL;
-  if (configured) return configured.replace(/\/$/, '');
+  if (configured) {
+    const base = configured.replace(/\/$/, '');
+    // Web stays same-origin; native receives the absolute HTTPS origin from the launcher.
+    if (Platform.OS === 'web' && base.startsWith(`${window.location.origin}/`)) {
+      return base.slice(window.location.origin.length);
+    }
+    return base;
+  }
   if (!__DEV__) throw new Error('خدمة تحليل السيرة لم تُضبط لهذه النسخة.');
   if (Platform.OS === 'web') return `http://${window.location.hostname}:3001`;
   const hostUri = Constants.expoConfig?.hostUri;

@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
 
-function harness({ configured = true, sessionError = null, tokens = ['test-only-current-token'], status = 200 } = {}) {
+function harness({ configured = true, sessionError = null, tokens = ['test-only-current-token'], status = 200, apiUrl = 'https://test-only.invalid', platform = 'web' } = {}) {
   const calls = { requests: [], forms: 0, sessions: 0, timers: 0 };
   const output = ts.transpileModule(fs.readFileSync('src/utils/cv-api.ts', 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
@@ -16,18 +16,19 @@ function harness({ configured = true, sessionError = null, tokens = ['test-only-
   } };
   const modules = {
     'expo-constants': {},
-    'expo-file-system': { File: class { constructor() { throw Error('unexpected native file access'); } } },
+    'expo-file-system': { File: class { constructor(uri) { this.uri = uri; } } },
     'expo/fetch': { fetch: async (url, init) => {
       calls.requests.push({ url, init });
       return { ok: status === 200, json: async () => status === 200 ? { skills: [] } : { error: 'سجّل الدخول مجددًا لتحليل السيرة.' } };
     } },
-    'react-native': { Platform: { OS: 'web' } },
+    'react-native': { Platform: { OS: platform } },
     './skill-profile': { isCvAnalysis: () => true },
     './supabase': { supabase: configured ? { auth } : null },
   };
   vm.runInNewContext(output, {
     exports, require: name => { if (!(name in modules)) throw Error(`Unexpected import ${name}`); return modules[name]; },
-    process: { env: { EXPO_PUBLIC_CV_API_URL: 'https://test-only.invalid' } },
+    process: { env: { EXPO_PUBLIC_CV_API_URL: apiUrl } },
+    window: { location: { origin: 'https://test-web.invalid' } },
     FormData: class {
       constructor() { calls.forms++; this.fields = []; }
       append(...args) { this.fields.push(args); }
@@ -70,3 +71,19 @@ test('client reports server 401 rather than returning analysis and clears its ti
   assert.equal(h.calls.requests.length, 1);
   assert.equal(h.calls.timers, 0);
 });
+
+test('web uses a relative same-origin HTTPS bridge without changing Bearer auth', async () => {
+  const h = harness({ apiUrl: 'https://test-web.invalid/api/cv' });
+  await h.analyzeCv(h.file);
+  assert.equal(h.calls.requests[0].url, '/api/cv/analyze-cv');
+  assert.equal(h.calls.requests[0].init.headers.Authorization, 'Bearer test-only-current-token');
+});
+
+for (const platform of ['android', 'ios']) {
+  test(`${platform} uses the absolute HTTPS bridge with the current token`, async () => {
+    const h = harness({ apiUrl: 'https://test-web.invalid/api/cv', platform });
+    await h.analyzeCv({ name: 'unused-upload.pdf', uri: 'test-only://unused' });
+    assert.equal(h.calls.requests[0].url, 'https://test-web.invalid/api/cv/analyze-cv');
+    assert.equal(h.calls.requests[0].init.headers.Authorization, 'Bearer test-only-current-token');
+  });
+}

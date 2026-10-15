@@ -3,16 +3,17 @@
 ## Run
 - Keep the existing Expo SDK 57 / React Native app and separate Node CV service.
 - Node.js 22 is required by the installed Supabase client.
-- Use the Run button to start `Masarak preview`, or run `EXPO_UNSTABLE_HEADLESS=1 npx expo start --web --host lan --port 5000`.
+- Use the Run button to start `Masarak preview`, or run `EXPO_PACKAGER_PROXY_URL="https://$REPLIT_DEV_DOMAIN" EXPO_UNSTABLE_HEADLESS=1 node scripts/start-dev.mjs`.
+- This runs Expo on port 5000 and the protected CV service on a private Unix socket, with no backend TCP listener. `/api/cv` is a same-origin HTTPS development bridge; only health and CV analysis are forwarded, not email hooks.
 - The browser preview uses port 5000. Watch mode is enabled so edits refresh during development.
 - Headless mode avoids installing the native desktop debugger in this browser-only environment.
 - Choose «متابعة دون حساب» to try the existing guest experience.
 
 ## Optional services not yet configured
 - Accounts require the existing Supabase project's `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Configure these using the environment/secrets UI, not source code. Account flows have not been verified.
-- CV analysis requires server dependencies, the server-only `GROQ_API_KEY`, and a running `npm run cv-server` service. Do not expose the Groq key with an `EXPO_PUBLIC_` prefix.
-- The imported CV client assumes a local-network backend on port 3001. Before enabling browser CV analysis on Replit, add a same-origin HTTPS API/proxy route and connect the client to it; do not send browsers to a localhost URL or an HTTPS page's HTTP backend.
-- The CV service is documented as a local prototype in `server/README_AR.md`. Do not publish it publicly without authentication, request limits, and privacy safeguards.
+- Actual CV analysis still requires the server-only `GROQ_API_KEY`, currently missing. Do not expose it with an `EXPO_PUBLIC_` prefix.
+- The development launcher sets `EXPO_PUBLIC_CV_API_URL` to the current HTTPS development origin plus `/api/cv`; web uses a relative same-origin path and native uses the absolute HTTPS URL.
+- Supabase verifies the access token before multipart processing. Do not bypass this guard or broaden CORS to make development work. See `docs/CV-HTTPS-DEVELOPMENT_AR.md` for evidence and remaining limits; this is not production publishing or readiness.
 
 ## Checks
 - `npm run lint`
