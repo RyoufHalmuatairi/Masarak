@@ -57,7 +57,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         throw new Error('Session changed during initialization');
-      } catch { if (active && !initialized.current) { setError('تعذر التحقق من جلسة الدخول. تأكد من الإنترنت وحاول مجددًا.'); setReady(false); } }
+      } catch {
+        if (active && !initialized.current) {
+          try { await client?.auth.signOut({ scope: 'local' }); }
+          catch { /* A local sign-out error must not block startup as a guest. */ }
+          if (active && !initialized.current) acceptSession(null);
+        }
+      }
     };
     void load();
     const appState = Platform.OS !== 'web' && client ? AppState.addEventListener('change', state => {

@@ -1,10 +1,26 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const harness = require('./helpers/auth-screen-harness.cjs');
-const provider = async t => {
-  const h = harness('src/contexts/auth-context.tsx', { provider: true });
+const provider = async (t, options = {}) => {
+  const h = harness('src/contexts/auth-context.tsx', { provider: true, ...options });
   t.after(h.dispose); await h.flush(); return h;
 };
+
+test('invalid cached session is cleared locally and startup continues to login without an error', async t => {
+  for (const failure of [{ getUserFailure: true }, { getSessionFailure: true, signOutFailure: true }]) {
+    const h = await provider(t, { session: hFixture(), ...failure });
+    assert.equal(h.calls.signOut.length, 1);
+    assert.equal(h.calls.signOut[0].scope, 'local');
+    assert.equal(h.value().session, null);
+    assert.equal(h.value().ready, true);
+    assert.equal(h.value().error, '');
+    assert.equal(h.owners.at(-1), null);
+  }
+});
+
+function hFixture() {
+  return { access_token: 'fixture-only-access', refresh_token: 'fixture-only-refresh', user: { id: 'fixture-owner', email: 'fixture@example.test' } };
+}
 
 test('PASSWORD_RECOVERY events preserve the recovery route instead of an ordinary login', async t => {
   const h = await provider(t);

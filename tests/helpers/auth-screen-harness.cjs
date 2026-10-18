@@ -8,7 +8,7 @@ const compile = file => ts.transpileModule(fs.readFileSync(path.join(root, file)
 }).outputText;
 
 // Runs real handlers/effects with synthetic sessions; never contacts any provider.
-module.exports = function harness(file, { provider = false, session = null } = {}) {
+module.exports = function harness(file, { provider = false, session = null, getSessionFailure = false, getUserFailure = false, signOutFailure = false } = {}) {
   const slots = [], queued = [], intervals = new Map(), routes = [], owners = [], cleanups = [];
   let cursor = 0, dirty = true, tree, clock = 100000, incoming = null, listener, saved = session;
   const calls = { send: [], verify: [], update: [], setSession: [], signOut: [] };
@@ -18,11 +18,11 @@ module.exports = function harness(file, { provider = false, session = null } = {
   const fixture = { access_token: 'fixture-only-access', refresh_token: 'fixture-only-refresh', user: { id: 'fixture-owner', email: 'fixture@example.test' } };
   const emit = (event, next) => { saved = next; listener?.(event, next); dirty = true; };
   const api = {
-    getSession: async () => ({ data: { session: saved }, error: null }),
-    getUser: async () => ({ data: { user: saved?.user ?? null }, error: null }),
+    getSession: async () => ({ data: { session: saved }, error: getSessionFailure ? { message: 'test-only storage failure' } : null }),
+    getUser: async () => ({ data: { user: saved?.user ?? null }, error: getUserFailure ? { message: 'test-only revoked session' } : null }),
     onAuthStateChange: callback => { listener = callback; return { data: { subscription: { unsubscribe() {} } } }; },
     setSession: async args => { calls.setSession.push(args); emit('SIGNED_IN', fixture); return { data: { session: fixture }, error: null }; },
-    signOut: async args => { calls.signOut.push(args); emit('SIGNED_OUT', null); return { error: null }; },
+    signOut: async args => { calls.signOut.push(args); if (signOutFailure) throw new Error('test-only local storage failure'); emit('SIGNED_OUT', null); return { error: null }; },
     resetPasswordForEmail: async (...args) => { calls.send.push(args); return { error: null }; },
     verifyOtp: async args => { calls.verify.push(args); auth.session = fixture; return { data: { session: fixture }, error: null }; },
     updateUser: async args => { calls.update.push(args); return { data: { user: fixture.user }, error: null }; },
