@@ -3,7 +3,7 @@ import { readPdfLayout, readDocxLayout, validateDateAssociation, plainLayoutText
 
 import { findSourceExcerpt } from './evidence-match.mjs';
 import { recoverListedSkills } from './skill-list-recovery.mjs';
-import { createSkillMatcher } from '../src/utils/skill-matching.mjs';
+import { createSkillMatcher, normalizeSkillName } from '../src/utils/skill-matching.mjs';
 
 const dataset = JSON.parse(readFileSync(new URL('../src/masarak_dataset.json', import.meta.url), 'utf8'));
 const linked = new Set([...dataset.career_skills.map(item => item.skill_id), ...dataset.skill_aliases.map(item => item.skill_id)]);
@@ -56,6 +56,57 @@ export const analysisSchema = recordSchema({
 });
 
 function normalize(text) { return text.replace(/\s+/g, ' ').trim().toLowerCase(); }
+const localSkillHeading = /^(?:technical\s+skills|skills|المهارات\s+التقنية|المهارات)\s*[:：]?\s*(.*)$/iu;
+const otherSectionHeading = /^(?:summary|profile|objective|contact|education|academic\s+background|experience|work\s+experience|employment|certificates?|certifications?|projects?|activities|volunteer(?:ing)?|awards|references|المؤهلات|التعليم|الخبرة|الخبرات|الخبرات\s+العملية|الشهادات|المشاريع|الأنشطة|التطوع|الجوائز|معلومات\s+الاتصال)\s*[:：]?$/iu;
+
+export function analyzeLocalText(source) {
+  const skills = [];
+  const seen = new Set();
+  let inSkillsSection = false;
+  for (const rawLine of source.split('\n')) {
+    if (skills.length >= 80) break;
+    const row = rawLine.replace(/^\[[PD]\d+L\d+(?: y=\d+)?\]\s*/, '');
+    const cells = row.split(/\(x=\d+\)| \| /u).map(cell => cell.trim()).filter(Boolean);
+    const allowedHeading = cells.findIndex(cell => localSkillHeading.test(cell));
+    if (allowedHeading !== -1) {
+      inSkillsSection = true;
+      const match = cells[allowedHeading].match(localSkillHeading);
+      // Only use text attached to the approved heading; ignore other PDF columns.
+      if (match[1]) collect(match[1]);
+      continue;
+    }
+    if (cells.some(cell => otherSectionHeading.test(cell))) {
+      inSkillsSection = false;
+      continue;
+    }
+    // Multiple visual columns are ambiguous; never treat unrelated cells as skills.
+    if (!inSkillsSection || cells.length !== 1) continue;
+    collect(cells[0]);
+  }
+
+  function collect(line) {
+    const names = line.replace(/^(?:[-*•▪]\s+|\d+[.)]\s+)/u, '')
+      .split(/[,،;؛•▪|]/u).map(name => name.trim()).filter(Boolean);
+    for (const name of names) {
+      const identity = normalizeSkillName(name);
+      if (!identity || seen.has(identity) || name.length > 60 || name.split(/\s+/u).length > 6
+        || !/^[\p{L}\p{N}][\p{L}\p{N}\s+#.()/-]*$/u.test(name)
+        || /https?:|\b(?:19|20)\d{2}\b|\b(?:developed|implemented|obtained|ignore|instructions|certificate|university|bachelor)\b/iu.test(name)
+        || /[.]$/u.test(name)) continue;
+      const mapped_skill_id = matchSkill(name);
+      // Unknown dotted phrases are more likely prose than an unambiguously named skill.
+      if (!mapped_skill_id && name.includes('.')) continue;
+      seen.add(identity);
+      skills.push({ name, mapped_skill_id, evidence: name });
+      if (skills.length >= 80) break;
+    }
+  }
+  return {
+    skills, certificates: [], experiences: [], education: [], projects: [], activities: [],
+    warnings: ['تحليل محلي محدود: استخرجنا المهارات المكتوبة حرفيًا فقط تحت عناوين المهارات المعتمدة وربطنا المعروف منها بالقاموس. لم نخمن معلومات؛ بقية الأقسام غير مستخرجة محليًا.'],
+  };
+}
+
 export function validateAnalysis(value, source) {
   const fields = { skills: ['name', 'evidence'], certificates: ['name', 'issuer', 'date', 'evidence'], experiences: ['role', 'organization', 'dates', 'description', 'evidence'], education: ['name', 'organization', 'dates', 'description', 'evidence'], projects: ['name', 'organization', 'dates', 'description', 'evidence'], activities: ['name', 'organization', 'dates', 'description', 'evidence'] };
   const output = { skills: [], certificates: [], experiences: [], education: [], projects: [], activities: [] };
@@ -91,7 +142,7 @@ export function validateAnalysis(value, source) {
 }
 
 export async function analyzeText(text, { key, model = 'openai/gpt-oss-20b', fetchImpl = fetch, coverageSections = [] } = {}) {
-  if (!key) throw new CvError('مفتاح Groq غير مضبوط في الخادم.', 503);
+  if (!key?.trim()) return analyzeLocalText(text);
   let response;
   try {
     response = await fetchImpl('https://api.groq.com/openai/v1/chat/completions', {

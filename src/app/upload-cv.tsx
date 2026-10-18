@@ -152,9 +152,9 @@ export default function UploadCvScreen() {
           <Pressable style={[styles.button, busy && styles.disabled]} accessibilityRole="button" disabled={busy || !ready} onPress={() => void pickCv()}><Text style={styles.buttonText}>{file ? 'اختيار ملف آخر' : 'اختيار السيرة من الملفات'}</Text></Pressable>
           {file ? <>
             <Text style={styles.fileName}>{file.name}</Text><Text style={styles.text}>{formatCvSize(file.size)}</Text>
-            {selection('أوافق على إرسال محتوى السيرة إلى Groq للتحليل.', consent, () => setConsent(!consent))}
-            <Text style={styles.note}>لا يحفظ الخادم نسخة من السيرة. نرسل النص إلى Groq؛ راجع سياسة الخدمة قبل رفع معلومات شخصية.</Text>
-            <Pressable disabled={busy} onPress={() => void Linking.openURL('https://console.groq.com/docs/your-data').catch(() => setError('تعذر فتح صفحة سياسة البيانات.'))}><Text style={styles.link}>كيف تتعامل Groq مع البيانات؟</Text></Pressable>
+            {selection('أوافق على تحليل محتوى السيرة؛ وقد يُرسل نصها إلى Groq إذا كانت الخدمة مفعّلة.', consent, () => setConsent(!consent))}
+            <Text style={styles.note}>إذا لم تتوفر خدمة Groq، يقتصر التحليل على المهارات المكتوبة تحت عناوين المهارات. عند تفعيل Groq قد يُرسل نص السيرة إلى مزوّد خارجي؛ لن يبدأ التحليل قبل موافقتك.</Text>
+            <Pressable disabled={busy} onPress={() => void Linking.openURL('https://console.groq.com/docs/your-data').catch(() => setError('تعذر فتح صفحة سياسة البيانات.'))}><Text style={styles.link}>سياسة بيانات Groq عند تفعيله</Text></Pressable>
             <Pressable style={[styles.button, (!consent || busy) && styles.disabled]} accessibilityRole="button" disabled={!consent || busy} onPress={() => void runAnalysis()}><Text style={styles.buttonText}>{analysis ? 'إعادة التحليل' : 'تحليل السيرة الذاتية'}</Text></Pressable>
             <Text style={styles.note}>السيرة ونتيجة التحليل محفوظتان على هذا الجهاز حتى تحذفهما. حفظ المتصفح منفصل عن حفظ الآيفون، وقد يُحذف عند مسح بيانات التطبيق أو المتصفح.</Text>
             <Pressable accessibilityRole="button" disabled={busy} onPress={() => setConfirmDelete(true)}><Text style={styles.link}>حذف السيرة المحفوظة</Text></Pressable>
