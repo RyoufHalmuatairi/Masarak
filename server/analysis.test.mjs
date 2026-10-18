@@ -66,6 +66,7 @@ test('local mode ignores nonapproved headings, sentence fragments, and other vis
   const source = [
     'Languages: Arabic, English',
     'Tools: Photoshop, Figma',
+    'Skills and Interests: Figma, Python',
     'Skills: Python programming and software testing.',
     '[P1L4 y=250] (x=20) Skills: | (x=400) Python, JavaScript',
     '[P1L5 y=300] (x=20) Database administration | (x=400) SQL',

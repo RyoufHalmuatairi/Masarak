@@ -56,7 +56,7 @@ export const analysisSchema = recordSchema({
 });
 
 function normalize(text) { return text.replace(/\s+/g, ' ').trim().toLowerCase(); }
-const localSkillHeading = /^(?:technical\s+skills|skills|المهارات\s+التقنية|المهارات)\s*[:：]?\s*(.*)$/iu;
+const localSkillHeading = /^(?:technical\s+skills|skills|المهارات\s+التقنية|المهارات)(?:\s*[:：]\s*(.*))?$/iu;
 const otherSectionHeading = /^(?:summary|profile|objective|contact|education|academic\s+background|experience|work\s+experience|employment|certificates?|certifications?|projects?|activities|volunteer(?:ing)?|awards|references|المؤهلات|التعليم|الخبرة|الخبرات|الخبرات\s+العملية|الشهادات|المشاريع|الأنشطة|التطوع|الجوائز|معلومات\s+الاتصال)\s*[:：]?$/iu;
 
 export function analyzeLocalText(source) {
