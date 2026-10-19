@@ -8,7 +8,7 @@ const compile = file => ts.transpileModule(fs.readFileSync(path.join(root, file)
 }).outputText;
 
 // Runs real handlers/effects with synthetic sessions; never contacts any provider.
-module.exports = function harness(file, { provider = false, session = null, getSessionFailure = false, getUserFailure = false, signOutFailure = false } = {}) {
+module.exports = function harness(file, { provider = false, session = null, getSessionFailure = false, getUserFailure = false, signOutFailure = false, platform = 'web', moduleOverrides = {} } = {}) {
   const slots = [], queued = [], intervals = new Map(), routes = [], owners = [], cleanups = [];
   let cursor = 0, dirty = true, tree, clock = 100000, incoming = null, listener, saved = session;
   const calls = { send: [], verify: [], update: [], setSession: [], signOut: [] };
@@ -63,8 +63,8 @@ module.exports = function harness(file, { provider = false, session = null, getS
     react,
     'react/jsx-runtime': { jsx, jsxs: jsx, Fragment: 'Fragment' },
     'expo-linking': { useLinkingURL: () => incoming },
-    'expo-router': { useRouter: () => router, useLocalSearchParams: () => ({ mode: 'login' }) },
-    'react-native': { Platform: { OS: 'web' }, AppState: {}, StyleSheet: { create: value => value },
+    'expo-router': { useRouter: () => router, useLocalSearchParams: () => ({ mode: 'login' }), useFocusEffect: callback => react.useEffect(callback, [callback]) },
+    'react-native': { Platform: { OS: platform }, AppState: {}, StyleSheet: { create: value => value },
       KeyboardAvoidingView: 'KeyboardAvoidingView', Pressable: 'Pressable', ScrollView: 'ScrollView',
       Text: 'Text', TextInput: 'TextInput', View: 'View' },
     'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' },
@@ -76,8 +76,9 @@ module.exports = function harness(file, { provider = false, session = null, getS
     '../components/masarak-brand': { MasarakBrand: 'MasarakBrand' },
     '../components/masarak-icon': { MasarakIcon: 'MasarakIcon' },
   };
+  Object.assign(mocks, moduleOverrides);
   class ClockDate extends Date { static now() { return clock; } }
-  const globals = { Date: ClockDate, URL, URLSearchParams, Promise, Map, Set, window: browser,
+  const globals = { Date: ClockDate, Error, URL, URLSearchParams, Promise, Map, Set, window: browser,
     setInterval: fn => { const id = intervals.size + 1; intervals.set(id, fn); return id; },
     clearInterval: id => intervals.delete(id) };
   const cache = {};

@@ -1,10 +1,10 @@
 import Constants from 'expo-constants';
-import { File } from 'expo-file-system';
 import { fetch } from 'expo/fetch';
 import { Platform } from 'react-native';
 import type { DocumentPickerAsset } from 'expo-document-picker';
 import { isCvAnalysis, type CvAnalysis } from './skill-profile';
 import { supabase } from './supabase';
+import { getValidatedCvFile } from './cv-upload-file';
 
 function serverUrl() {
   const configured = process.env.EXPO_PUBLIC_CV_API_URL;
@@ -31,9 +31,9 @@ export async function analyzeCv(file: DocumentPickerAsset): Promise<CvAnalysis> 
   const { data, error } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (error || !token) throw new Error('سجّل الدخول لتحليل السيرة.');
+  const content = await getValidatedCvFile(file);
   const form = new FormData();
-  if (Platform.OS === 'web' && file.file) form.append('cv', file.file, file.name);
-  else form.append('cv', new File(file.uri), file.name);
+  form.append('cv', content, file.name);
   form.append('consent', 'true');
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 90000);

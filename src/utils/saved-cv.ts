@@ -35,7 +35,7 @@ export function storeCvFile(asset: DocumentPickerAsset): Promise<SavedCv> {
     if (problem) throw new Error(problem);
     const directory = cvDirectory();
     directory.create({ idempotent: true, intermediates: true });
-    const destination = new File(directory, `cv-${Date.now()}-${Math.random().toString(36).slice(2)}.${asset.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx'}`);
+    const destination = new File(directory, `cv-${Date.now()}-${Math.random().toString(36).slice(2)}.pdf`);
     const prior = await AsyncStorage.getItem(key);
     await new File(asset.uri).copy(destination);
     try { scope.assertCurrent(); } catch (error) { if (destination.exists) destination.delete(); throw error; }
@@ -79,7 +79,7 @@ export async function prepareSavedCvRestore(asset: DocumentPickerAsset | null, r
   if (asset) {
     const problem = validateCvFile(asset); if (problem) throw new Error(problem);
     const directory = cvDirectory(); directory.create({ idempotent: true, intermediates: true });
-    destination = new File(directory, `cv-cloud-${Date.now()}-${Math.random().toString(36).slice(2)}.${asset.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx'}`);
+    destination = new File(directory, `cv-cloud-${Date.now()}-${Math.random().toString(36).slice(2)}.pdf`);
     await new File(asset.uri).copy(destination);
     try { scope.assertCurrent(); } catch (error) { if (destination.exists) destination.delete(); throw error; }
     saved = { file_id: destination.uri, asset: { uri: destination.uri, name: asset.name, size: asset.size, mimeType: asset.mimeType, lastModified: asset.lastModified }, review };

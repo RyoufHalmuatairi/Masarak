@@ -3,7 +3,8 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CV_MIME_TYPES, formatCvSize, validateCvFile } from '../utils/cv-file';
+import { CV_MIME_TYPES, formatCvSize } from '../utils/cv-file';
+import { getValidatedCvFile } from '../utils/cv-upload-file';
 import { analyzeCv } from '../utils/cv-api';
 import { readSkillProfile, saveReviewedCv, clearReviewedCv, type CvAnalysis, type CvProfile } from '../utils/skill-profile';
 import dataset from '../masarak_dataset.json';
@@ -85,8 +86,8 @@ export default function UploadCvScreen() {
       scope.assertCurrent();
       const selected = result.assets[0];
       if (!selected) throw new Error('تعذر اختيار الملف.');
-      const problem = validateCvFile(selected);
-      if (problem) throw new Error(problem);
+      await getValidatedCvFile(selected);
+      scope.assertCurrent();
       const saved = await storeCvFile(selected);
       setFile(saved.asset); setAnalysis(null); setConsent(false); setConfirmDelete(false);
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'تعذر اختيار الملف.'); }
@@ -148,7 +149,7 @@ export default function UploadCvScreen() {
         <Text style={styles.text}>راجع مهاراتك وتعليمك وشهاداتك وخبراتك ومشاريعك وأنشطتك قبل اعتمادها.</Text>
         <View style={styles.card}>
           <Text style={styles.heading}>{file ? 'سيرتك المحفوظة' : 'اختر ملف السيرة'}</Text>
-          <Text style={styles.text}>PDF نصي أو DOCX، حتى 10 ميجابايت. السيرة المصوّرة غير مدعومة حاليًا.</Text>
+          <Text style={styles.text}>PDF فقط، حتى 10 ميجابايت، ويجب أن يحتوي نصًا مقروءًا. الصور وملفات Word وPDF الممسوح ضوئيًا دون نص غير مدعومة.</Text>
           <Pressable style={[styles.button, busy && styles.disabled]} accessibilityRole="button" disabled={busy || !ready} onPress={() => void pickCv()}><Text style={styles.buttonText}>{file ? 'اختيار ملف آخر' : 'اختيار السيرة من الملفات'}</Text></Pressable>
           {file ? <>
             <Text style={styles.fileName}>{file.name}</Text><Text style={styles.text}>{formatCvSize(file.size)}</Text>

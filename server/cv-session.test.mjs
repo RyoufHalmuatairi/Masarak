@@ -154,6 +154,25 @@ test('authenticated PDF upload reaches real extraction and local skills/experien
   assert.deepEqual(h.calls.identities, ['verified-owner']);
 });
 
+test('authenticated upload rejects images, DOCX and images renamed to PDF before analysis', async t => {
+  for (const [name, mime, bytes] of [
+    ['cv.png', 'image/png', '\x89PNG\r\n\x1a\n'],
+    ['cv.jpg', 'image/jpeg', '\xff\xd8\xff'],
+    ['cv.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'PK\x03\x04'],
+    ['renamed.pdf', 'application/pdf', '\x89PNG\r\n\x1a\n'],
+    ['renamed.pdf', 'application/pdf', '\xff\xd8\xff'],
+  ]) {
+    const h = await harness(t);
+    const boundary = 'test-only-rejected-cv';
+    const body = Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="consent"\r\n\r\ntrue\r\n--${boundary}\r\nContent-Disposition: form-data; name="cv"; filename="${name}"\r\nContent-Type: ${mime}\r\n\r\n${bytes}\r\n--${boundary}--\r\n`);
+    const response = await h.send({ authorization: 'Bearer test-only-valid-session', body, contentType: `multipart/form-data; boundary=${boundary}` });
+    assert.equal(response.status, 400);
+    assert.equal(JSON.parse(response.body).error, 'يرجى رفع السيرة الذاتية بصيغة PDF فقط');
+    assert.equal(h.calls.extract, 1);
+    assert.equal(h.calls.groq, 0);
+  }
+});
+
 for (const options of [{ fail: true }, { status: 500 }, { user: {} }, { configured: false }]) {
   test(`auth failure fails closed without extraction/Groq: ${JSON.stringify(options)}`, async t => {
     const h = await harness(t, options);

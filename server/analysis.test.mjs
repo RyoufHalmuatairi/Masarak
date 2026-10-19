@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { analyzeText, extractText, validateAnalysis, dictionary } from './analysis.mjs';
+import { syntheticPdf } from './fixtures/synthetic-pdf.mjs';
 
 const text = 'Demo Candidate. Skills: Python programming and software testing. Certificate: Example Certificate, issued by Demo Institute in 2024. Experience: Developer Intern at Demo Company, 2023.';
 const id = dictionary.find(item => item.name === 'Programming').id;
@@ -183,13 +184,22 @@ test('local skill limits do not skip a later experience section or rewrite liter
 function matchSkillId(name) {
   return dictionary.find(entry => entry.aliases.some(alias => alias.toLowerCase() === name.toLowerCase()))?.id ?? null;
 }
-test('extracts actual PDF and DOCX files and rejects empty or disguised documents', async () => {
-  for (const extension of ['pdf', 'docx']) {
-    const buffer = await readFile(new URL(`fixtures/demo.${extension}`, import.meta.url));
-    const extracted = await extractText({ originalname: `demo.${extension}`, buffer });
-    assert.match(extracted, /Python programming/);
+test('extracts valid PDF only and rejects other types, disguised images, empty and damaged files', async () => {
+  const buffer = await readFile(new URL('fixtures/demo.pdf', import.meta.url));
+  assert.match(await extractText({ originalname: 'demo.PDF', mimetype: 'application/pdf', buffer }), /Python programming/);
+  for (const file of [
+    { originalname: 'cv.png', mimetype: 'image/png', buffer: Buffer.from('\x89PNG\r\n\x1a\n') },
+    { originalname: 'cv.jpg', mimetype: 'image/jpeg', buffer: Buffer.from('\xff\xd8\xff') },
+    { originalname: 'cv.docx', mimetype: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', buffer: await readFile(new URL('fixtures/demo.docx', import.meta.url)) },
+    { originalname: 'renamed.pdf', mimetype: 'application/pdf', buffer: Buffer.from('\x89PNG\r\n\x1a\n') },
+    { originalname: 'renamed.pdf', mimetype: 'application/pdf', buffer: Buffer.from('\xff\xd8\xff') },
+    { originalname: 'cv.pdf', mimetype: 'image/png', buffer },
+  ]) {
+    await assert.rejects(extractText(file), error => error.status === 400 && error.message === 'يرجى رفع السيرة الذاتية بصيغة PDF فقط');
   }
-  await assert.rejects(extractText({ originalname: 'cv.pdf', buffer: Buffer.from('not a pdf') }));
-  await assert.rejects(extractText({ originalname: 'cv.docx', buffer: Buffer.alloc(0) }));
+  await assert.rejects(extractText({ originalname: 'cv.pdf', buffer: Buffer.alloc(0) }), /فارغ/);
+  await assert.rejects(extractText({ originalname: 'cv.pdf', buffer: Buffer.from('%PDF-1.4 corrupted') }), /تعذر قراءة ملف PDF/);
+  await assert.rejects(extractText({ originalname: 'cv.pdf', buffer: Buffer.alloc(10 * 1024 * 1024 + 1) }), /10 ميجابايت/);
+  await assert.rejects(extractText({ originalname: 'scan.pdf', mimetype: 'application/pdf', buffer: syntheticPdf() }), /نصًا كافيًا.*قراءة الصور غير متاحة/);
 });
 

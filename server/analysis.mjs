@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { readPdfLayout, readDocxLayout, validateDateAssociation, plainLayoutText, recoverLinkedDate } from './layout-reader.mjs';
+import { readPdfLayout, validateDateAssociation, plainLayoutText, recoverLinkedDate } from './layout-reader.mjs';
 
 import { findSourceExcerpt } from './evidence-match.mjs';
 import { recoverListedSkills } from './skill-list-recovery.mjs';
@@ -25,18 +25,19 @@ export class CvError extends Error {
 
 export async function extractText(file) {
   if (!file?.buffer?.length) throw new CvError('اختر ملف سيرة غير فارغ.');
-  const name = file.originalname.toLowerCase();
+  if (file.buffer.length > 10 * 1024 * 1024) throw new CvError('حجم السيرة أكبر من 10 ميجابايت.');
+  const name = String(file.originalname ?? '').toLowerCase();
+  if (!name.endsWith('.pdf') || (file.mimetype && !['application/pdf', 'application/octet-stream'].includes(file.mimetype))
+    || file.buffer.subarray(0, 5).toString() !== '%PDF-') {
+    throw new CvError('يرجى رفع السيرة الذاتية بصيغة PDF فقط');
+  }
   let text;
   try {
-    if (name.endsWith('.pdf') && file.buffer.subarray(0, 5).toString() === '%PDF-') {
-      text = await readPdfLayout(file.buffer);
-    } else if (name.endsWith('.docx') && file.buffer.subarray(0, 2).toString() === 'PK') {
-      text = await readDocxLayout(file.buffer);
-    } else throw new CvError('نوع الملف غير صحيح. استخدم PDF أو DOCX.');
+    text = await readPdfLayout(file.buffer);
   } catch (error) {
     if (error instanceof CvError) throw error;
     if (error.message === 'PAGE_LIMIT') throw new CvError('اختر سيرة لا تتجاوز 15 صفحة.');
-    throw new CvError('تعذر قراءة الملف. استخدم نسخة سليمة وغير محمية بكلمة مرور.');
+    throw new CvError('تعذر قراءة ملف PDF. استخدم نسخة سليمة وغير محمية بكلمة مرور.');
   }
   text = text.replace(/\u0000/g, '').trim();
   if (text.length < 40) throw new CvError('لم نجد نصًا كافيًا. إذا كانت السيرة صورة ممسوحة، استخدم نسخة نصية؛ قراءة الصور غير متاحة حاليًا.');

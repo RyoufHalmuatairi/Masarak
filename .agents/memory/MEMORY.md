@@ -3,3 +3,4 @@
 - [Protected Replit configuration](replit-configuration.md) — Structural .replit edits require validated replacement, not direct patches.
 - [Expo proxy environment](expo-proxy.md) — The public origin must reach Expo before dotenv; verify generated native URLs, not just the web preview.
 - [CV development boundary](cv-development-boundary.md) — Development HTTPS connectivity does not authorize wider CORS, a public backend listener, or sending a CV.
+- [CV upload formats](cv-file-scope.md) — PDF only; images, Word/DOCX and OCR are explicitly outside the requested scope.
