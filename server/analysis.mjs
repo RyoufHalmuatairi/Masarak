@@ -57,7 +57,69 @@ export const analysisSchema = recordSchema({
 
 function normalize(text) { return text.replace(/\s+/g, ' ').trim().toLowerCase(); }
 const localSkillHeading = /^(?:technical\s+skills|skills|المهارات\s+التقنية|المهارات)(?:\s*[:：]\s*(.*))?$/iu;
-const otherSectionHeading = /^(?:summary|profile|objective|contact|education|academic\s+background|experience|work\s+experience|employment|certificates?|certifications?|projects?|activities|volunteer(?:ing)?|awards|references|المؤهلات|التعليم|الخبرة|الخبرات|الخبرات\s+العملية|الشهادات|المشاريع|الأنشطة|التطوع|الجوائز|معلومات\s+الاتصال)\s*[:：]?$/iu;
+const localExperienceHeading = /^(?:experience|work\s+experience|professional\s+experience|employment(?:\s+history)?|career\s+history|internships?|الخبرة|الخبرات|الخبرة\s+العملية|الخبرات\s+العملية|خبرات\s+العمل|الخبرات\s+المهنية|التدريب(?:\s+العملي)?)(?:\s*[:：]\s*(.*))?$/iu;
+const otherSectionHeading = /^(?:summary|profile|objective|contact|education|academic\s+background|certificates?|certifications?|projects?|activities|volunteer(?:ing)?|awards|references|المؤهلات|التعليم|الشهادات|المشاريع|الأنشطة|التطوع|الجوائز|معلومات\s+الاتصال)(?:\s*[:：]\s*.*)?$/iu;
+
+const localMonths = '(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?|يناير|فبراير|مارس|أبريل|ابريل|مايو|يونيو|يوليو|أغسطس|اغسطس|سبتمبر|أكتوبر|اكتوبر|نوفمبر|ديسمبر)';
+const localDatePoint = `(?:${localMonths}\\s+)?[0-9٠-٩]{4}`;
+const localDateEnd = `(?:${localDatePoint}|present|current|now|حتى\\s+الآن|الآن|حاليًا|حاليا)`;
+const localDateRange = `${localDatePoint}(?:\\s*(?:-|–|—|to|until|through|حتى|إلى|الى)\\s*${localDateEnd})?`;
+const localWholeDate = new RegExp(`^${localDateRange}$`, 'iu');
+const localDateSuffix = new RegExp(`(?:\\s*[,;(—–|\\-]\\s*|\\s+(?:from|since|من|خلال)\\s+)(${localDateRange})[).,؛]?\\s*$`, 'iu');
+
+function validLocalRole(value) {
+  const role = value.trim();
+  return role.length >= 2 && role.length <= 100 && !/[.!?؟]$/u.test(role)
+    && !/^(?:built|developed|created|implemented|designed|managed|maintained|supported|assisted|conducted|analyzed|delivered|coordinated|provided|improved|worked|ساهمت|طورت|أنشأت|صممت|نفذت|أدرت|قدت|شاركت|حللت|قدمت|حسنت|تابعت|أشرفت|ساعدت|قمت|عملت على)\b/iu.test(role);
+}
+
+function localExperience(value, lineId = '') {
+  const evidence = value.trim();
+  if (!evidence || evidence.length > 500) return null;
+  const content = evidence.replace(/^(?:[-*•▪]\s+|\d+[.)]\s+)/u, '').trim();
+  const roleLabel = /^(?:role|position|job\s+title|title|المسمى(?:\s+الوظيفي)?|الوظيفة|الدور)\s*[:：]\s*/iu;
+  const organizationLabel = /^(?:organization|organisation|company|employer|جهة\s+العمل|الجهة|الشركة|المؤسسة)\s*[:：]\s*/iu;
+  const datesLabel = /^(?:dates?|period|duration|employment\s+period|الفترة|المدة|التاريخ)\s*[:：]\s*/iu;
+  const fields = {};
+  let hasLabels = false;
+  for (const part of content.split(/[;؛|]/u).map(item => item.trim()).filter(Boolean)) {
+    for (const [field, label] of [['role', roleLabel], ['organization', organizationLabel], ['dates', datesLabel]]) {
+      const match = part.match(label);
+      if (match) {
+        fields[field] = part.slice(match[0].length).trim();
+        hasLabels = true;
+        break;
+      }
+    }
+  }
+  if (hasLabels) {
+    if (!fields.role) return null;
+    const dates = fields.dates && localWholeDate.test(fields.dates) ? fields.dates : '';
+    return { role: fields.role, organization: fields.organization ?? '', dates, date_line_id: dates ? lineId : '', description: '', evidence };
+  }
+
+  if ((value.match(/\(x=\d+\)/gu) ?? []).length > 1) return null;
+  const columns = content.split(/\s+\|\s+/u).map(item => item.trim()).filter(Boolean);
+  if (columns.length > 1) {
+    if (columns.length > 3) return null;
+    const [role, organization, period] = columns;
+    const dates = period && localWholeDate.test(period) ? period : '';
+    if (columns.length === 3 && !dates) return null;
+    if (!validLocalRole(role)) return null;
+    return { role, organization, dates, date_line_id: dates ? lineId : '', description: '', evidence };
+  }
+
+  const dated = content.match(localDateSuffix);
+  const body = (dated ? content.slice(0, dated.index).replace(/[,:;(—–|\-]\s*$/u, '').trim() : content)
+    .split(/[;؛]/u)[0].trim();
+  const dates = dated?.[1] ?? '';
+  const english = body.match(/^(.{2,100}?)\s+(?:at|@)\s+(.{2,160})$/iu);
+  const arabic = body.match(/^(.{2,100}?)\s+(?:لدى|لدي|عند)\s+(.{2,160})$/iu)
+    ?? body.match(/^(.{2,100}?)\s+في\s+((?:شركة|مؤسسة|منظمة|مستشفى|جامعة|مدرسة|وزارة|مركز|بنك|هيئة|معهد|أكاديمية)\s+.{2,150})$/iu);
+  const paired = english ?? arabic;
+  if (!paired || !validLocalRole(paired[1])) return null;
+  return { role: paired[1].trim(), organization: paired[2].trim(), dates, date_line_id: dates ? lineId : '', description: '', evidence };
+}
 
 export function analyzeLocalText(source) {
   const skills = [];
