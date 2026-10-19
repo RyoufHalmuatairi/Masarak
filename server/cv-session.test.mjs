@@ -5,12 +5,12 @@ import { once } from 'node:events';
 import { readFile } from 'node:fs/promises';
 import { createCvApp } from './cv-app.mjs';
 import { createCvSessionGuard } from './cv-session.mjs';
-import { extractText } from './analysis.mjs';
+import { extractText, analyzeText } from './analysis.mjs';
 
 // Only loopback HTTP is used. Supabase and Groq are always mocked.
 const url = 'https://test-project.supabase.co';
 const key = 'sb_publishable_test-only';
-async function harness(t, { status = 200, user = { id: 'verified-owner' }, fail = false, configured = true } = {}) {
+async function harness(t, { status = 200, user = { id: 'verified-owner' }, fail = false, configured = true, localAnalysis = false } = {}) {
   const calls = { auth: [], extract: 0, groq: 0, identities: [] };
   const guard = createCvSessionGuard({
     url: configured ? url : '', key,
@@ -27,6 +27,7 @@ async function harness(t, { status = 200, user = { id: 'verified-owner' }, fail 
     }),
     extractCvText: async file => { calls.extract++; return extractText(file); },
     analyzeCvText: async text => {
+      if (localAnalysis) return analyzeText(text, { key: '', fetchImpl: async () => { calls.groq++; throw new Error('Local analysis must not call any provider'); } });
       calls.groq++;
       assert.ok(text.length >= 40);
       return { skills: [], certificates: [], experiences: [], education: [], projects: [], activities: [], warnings: [] };
@@ -107,6 +108,50 @@ test('verified session accepts an existing PDF fixture and ignores client user_i
   assert.deepEqual(h.calls.identities, ['verified-owner']);
   assert.equal(h.calls.extract, 1);
   assert.equal(h.calls.groq, 1); // Local mock only, never the provider.
+});
+
+test('authenticated PDF upload reaches real extraction and local skills/experience analysis without Groq', async t => {
+  const h = await harness(t, { localAnalysis: true });
+  const lines = [
+    'Demo Candidate - synthetic CV',
+    'Skills: Python, SQL',
+    'Work Experience:',
+    'Software Engineer at Sample Labs, 2021 - 2023',
+  ];
+  const stream = 'BT /F1 12 Tf 50 750 Td ' + lines.map((line, index) =>
+    `${index ? '0 -24 Td ' : ''}(${line.replace(/[\\()]/g, '\\$&')}) Tj`).join('\n') + ' ET';
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    `<< /Length ${Buffer.byteLength(stream)} >>\nstream\n${stream}\nendstream`,
+  ];
+  let document = '%PDF-1.4\n';
+  const offsets = [0];
+  for (const [index, object] of objects.entries()) {
+    offsets.push(Buffer.byteLength(document));
+    document += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  }
+  const xref = Buffer.byteLength(document);
+  document += `xref\n0 6\n0000000000 65535 f \n${offsets.slice(1).map(offset => `${String(offset).padStart(10, '0')} 00000 n \n`).join('')}trailer\n<< /Root 1 0 R /Size 6 >>\nstartxref\n${xref}\n%%EOF\n`;
+  const boundary = 'test-only-local-fr3-boundary';
+  const body = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="consent"\r\n\r\ntrue\r\n--${boundary}\r\nContent-Disposition: form-data; name="cv"; filename="synthetic.pdf"\r\nContent-Type: application/pdf\r\n\r\n`),
+    Buffer.from(document), Buffer.from(`\r\n--${boundary}--\r\n`),
+  ]);
+  const response = await h.send({ authorization: 'Bearer test-only-valid-session', body, contentType: `multipart/form-data; boundary=${boundary}` });
+  assert.equal(response.status, 200);
+  const result = JSON.parse(response.body);
+  assert.deepEqual(result.skills.map(item => item.name), ['Python', 'SQL']);
+  assert.equal(result.experiences.length, 1);
+  assert.equal(result.experiences[0].role, 'Software Engineer');
+  assert.equal(result.experiences[0].organization, 'Sample Labs');
+  assert.equal(result.experiences[0].dates, '2021 - 2023');
+  assert.equal(result.experiences[0].evidence, lines[3]);
+  assert.equal(h.calls.extract, 1);
+  assert.equal(h.calls.groq, 0);
+  assert.deepEqual(h.calls.identities, ['verified-owner']);
 });
 
 for (const options of [{ fail: true }, { status: 500 }, { user: {} }, { configured: false }]) {

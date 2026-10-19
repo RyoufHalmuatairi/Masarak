@@ -153,7 +153,7 @@ export default function UploadCvScreen() {
           {file ? <>
             <Text style={styles.fileName}>{file.name}</Text><Text style={styles.text}>{formatCvSize(file.size)}</Text>
             {selection('أوافق على تحليل محتوى السيرة؛ وقد يُرسل نصها إلى Groq إذا كانت الخدمة مفعّلة.', consent, () => setConsent(!consent))}
-            <Text style={styles.note}>دون Groq، يقتصر التحليل المحلي على المهارات الحرفية والخبرات الواضحة تحت أقسامها وبأدلة من النص؛ وقد يفوّت التنسيقات المعقدة ولا يخمّن معلومات أو يستخرج بقية الأقسام. عند تفعيل Groq قد يُرسل نص السيرة إلى مزوّد خارجي؛ لن يبدأ التحليل قبل موافقتك.</Text>
+            <Text style={styles.note}>دون Groq، هذا استخراج محدود بقواعد وليس تحليل ذكاء اصطناعي كاملًا. يلتقط المهارات الحرفية والخبرات الواضحة تحت أقسامها بأدلة من النص؛ وقد يفوّت التنسيقات المعقدة ولا يخمّن معلومات أو يستخرج بقية الأقسام. عند تفعيل Groq قد يُرسل نص السيرة إلى مزوّد خارجي؛ لن يبدأ التحليل قبل موافقتك.</Text>
             <Pressable disabled={busy} onPress={() => void Linking.openURL('https://console.groq.com/docs/your-data').catch(() => setError('تعذر فتح صفحة سياسة البيانات.'))}><Text style={styles.link}>سياسة بيانات Groq عند تفعيله</Text></Pressable>
             <Pressable style={[styles.button, (!consent || busy) && styles.disabled]} accessibilityRole="button" disabled={!consent || busy} onPress={() => void runAnalysis()}><Text style={styles.buttonText}>{analysis ? 'إعادة التحليل' : 'تحليل السيرة الذاتية'}</Text></Pressable>
             <Text style={styles.note}>السيرة ونتيجة التحليل محفوظتان على هذا الجهاز حتى تحذفهما. حفظ المتصفح منفصل عن حفظ الآيفون، وقد يُحذف عند مسح بيانات التطبيق أو المتصفح.</Text>

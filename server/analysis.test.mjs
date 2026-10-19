@@ -110,6 +110,7 @@ test('local mode leaves unclear experience empty and never turns actions or ambi
     'Experience:',
     'Built a dashboard at Sample Labs during 2024.',
     'Supported the release at Example Company.',
+    'طورت لوحة متابعة لدى شركة خيالية.',
     '[P1L4 y=250] (x=20) Software Engineer | (x=600) Example Company, 2022–2023',
     'Projects: Product Designer at a fictional employer, 2021',
     'Education: Engineer at a fictional employer, 2020',
@@ -120,6 +121,18 @@ test('local mode leaves unclear experience empty and never turns actions or ambi
   assert.match(local.warnings[0], /لا نخمن|لم نخمن/);
 });
 
+test('local mode has no work experiences without a work section and does not infer skills from a role', async () => {
+  const absent = await analyzeText('Education:\nStudent at Demo University\nProjects:\nSoftware Engineer at a demo project\nSkills: Python');
+  assert.deepEqual(absent.experiences, []);
+  assert.deepEqual(absent.skills.map(item => item.name), ['Python']);
+  const sparse = await analyzeText('Experience:\nSoftware Engineer at Sample Labs\n2020 - 2023');
+  assert.equal(sparse.experiences[0].role, 'Software Engineer');
+  assert.equal(sparse.experiences[0].organization, 'Sample Labs');
+  assert.equal(sparse.experiences[0].dates, '');
+  assert.equal(sparse.experiences[0].description, '');
+  assert.deepEqual(sparse.skills, []);
+});
+
 test('local mode accepts an explicit role while leaving unstated employer and dates blank', async () => {
   const source = 'Work Experience:\nRole: Product Designer\nSkills: Figma';
   const local = await analyzeText(source);
@@ -127,6 +140,44 @@ test('local mode accepts an explicit role while leaving unstated employer and da
     role: 'Product Designer', organization: '', dates: '', date_line_id: '', description: '', evidence: 'Role: Product Designer',
   }]);
   assert.deepEqual(local.skills.map(item => item.name), ['Figma']);
+});
+
+test('local mode joins only consecutive explicit experience fields and keeps all evidence in the source language', async () => {
+  for (const lines of [
+    ['Role: Data Analyst', 'Company: Demo Labs', 'Period: 2021 - 2023', 'Description: Reviewed synthetic survey data.'],
+    ['المسمى: محللة بيانات', 'الجهة: شركة آفاق', 'الفترة: ٢٠٢١ - ٢٠٢٣', 'المهام: مراجعة بيانات استبيان تجريبي.'],
+  ]) {
+    const source = ['Experience:', ...lines.map((line, index) => `[D1L${index + 2}] ${line}`), 'Education:', 'Company: Must not leak into the job'].join('\n');
+    const local = await analyzeText(source);
+    assert.equal(local.experiences.length, 1);
+    const experience = local.experiences[0];
+    assert.equal(experience.evidence, lines.join('\n'));
+    assert.ok(lines[0].includes(experience.role));
+    assert.ok(lines[1].includes(experience.organization));
+    assert.ok(lines[2].includes(experience.dates));
+    assert.ok(lines[3].includes(experience.description));
+    assert.equal(experience.date_line_id, 'D1L4');
+    assert.ok(!experience.organization.includes('Must not leak'));
+  }
+});
+
+test('local mode does not complete a labelled job across an ambiguous PDF row or an unrelated line', async () => {
+  for (const gap of ['Unrelated narrative', '[P1L3 y=300] (x=20) Company: Wrong employer | (x=500) Other column']) {
+    const local = await analyzeText(['Experience:', 'Role: Data Analyst', gap, 'Company: Must not attach', 'Period: 2022 - 2024'].join('\n'));
+    assert.equal(local.experiences.length, 1);
+    assert.equal(local.experiences[0].organization, '');
+    assert.equal(local.experiences[0].dates, '');
+  }
+  const undecodable = await analyzeText('Experience:\nSoftware Engineer at Demo Labs, 2020 and 2021');
+  assert.equal(undecodable.experiences[0].organization, '');
+  assert.equal(undecodable.experiences[0].dates, '');
+});
+
+test('local skill limits do not skip a later experience section or rewrite literal technical job titles', async () => {
+  const local = await analyzeText(['Skills:', ...Array.from({ length: 85 }, (_, index) => `Demo Tool ${index + 1}`), 'Experience:', '.NET Developer at Sample Labs'].join('\n'));
+  assert.equal(local.skills.length, 80);
+  assert.equal(local.experiences.length, 1);
+  assert.equal(local.experiences[0].role, '.NET Developer');
 });
 
 function matchSkillId(name) {

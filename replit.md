@@ -11,7 +11,7 @@
 
 ## Optional services not yet configured
 - Accounts require the existing Supabase project's `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Configure these using the environment/secrets UI, not source code. Account flows have not been verified.
-- When `GROQ_API_KEY` is absent, the protected service extracts only skills literally listed beneath the approved Skills headings; other sections are empty. When configured, Groq supplies the richer analysis. Keep the key server-only, never `EXPO_PUBLIC_`.
+- When `GROQ_API_KEY` is absent, the protected service extracts literal listed skills and clear work experiences from their headings, with source evidence and no invented facts. Other sections remain empty; ambiguous layouts can be omitted. This is limited deterministic extraction, not full AI analysis. When configured, Groq supplies the richer analysis. Keep the key server-only, never `EXPO_PUBLIC_`.
 - The development launcher sets `EXPO_PUBLIC_CV_API_URL` to the current HTTPS development origin plus `/api/cv`; web uses a relative same-origin path and native uses the absolute HTTPS URL.
 - Supabase verifies the access token before multipart processing. Do not bypass this guard or broaden CORS to make development work. See `docs/CV-HTTPS-DEVELOPMENT_AR.md` for evidence and remaining limits; this is not production publishing or readiness.
 

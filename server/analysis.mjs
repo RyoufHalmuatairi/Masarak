@@ -65,25 +65,24 @@ const localDatePoint = `(?:${localMonths}\\s+)?[0-9٠-٩]{4}`;
 const localDateEnd = `(?:${localDatePoint}|present|current|now|حتى\\s+الآن|الآن|حاليًا|حاليا)`;
 const localDateRange = `${localDatePoint}(?:\\s*(?:-|–|—|to|until|through|حتى|إلى|الى)\\s*${localDateEnd})?`;
 const localWholeDate = new RegExp(`^${localDateRange}$`, 'iu');
-const localDateSuffix = new RegExp(`(?:\\s*[,;(—–|\\-]\\s*|\\s+(?:from|since|من|خلال)\\s+)(${localDateRange})[).,؛]?\\s*$`, 'iu');
+const localDateSuffix = new RegExp(`(?:\\s*[,،;(—–|\\-]\\s*|\\s+(?:from|since|من|خلال)\\s+)(${localDateRange})[).,؛]?\\s*$`, 'iu');
 
 function validLocalRole(value) {
   const role = value.trim();
-  return role.length >= 2 && role.length <= 100 && !/[.!?؟]$/u.test(role)
+  return role.length >= 2 && role.length <= 100 && !/[.!?؟]$|[0-9٠-٩]{4}/u.test(role)
     && !/^(?:built|developed|created|implemented|designed|managed|maintained|supported|assisted|conducted|analyzed|delivered|coordinated|provided|improved|worked|ساهمت|طورت|أنشأت|صممت|نفذت|أدرت|قدت|شاركت|حللت|قدمت|حسنت|تابعت|أشرفت|ساعدت|قمت|عملت على)(?=$|\s)/iu.test(role);
 }
 
-function localExperience(value, lineId = '') {
-  const evidence = value.trim();
-  if (!evidence || evidence.length > 500) return null;
-  const content = evidence.replace(/^(?:[-*•▪]\s+|\d+[.)]\s+)/u, '').trim();
+function localExperienceFields(content) {
+  content = content.replace(/^(?:[-*•▪]\s+|\d+[.)]\s+)/u, '').trim();
   const roleLabel = /^(?:role|position|job\s+title|title|المسمى(?:\s+الوظيفي)?|الوظيفة|الدور)\s*[:：]\s*/iu;
   const organizationLabel = /^(?:organization|organisation|company|employer|جهة\s+العمل|الجهة|الشركة|المؤسسة)\s*[:：]\s*/iu;
   const datesLabel = /^(?:dates?|period|duration|employment\s+period|الفترة|المدة|التاريخ)\s*[:：]\s*/iu;
+  const descriptionLabel = /^(?:description|responsibilities|duties|وصف(?:\s+الخبرة)?|المهام|المسؤوليات)\s*[:：]\s*/iu;
   const fields = {};
   let hasLabels = false;
   for (const part of content.split(/[;؛|]/u).map(item => item.trim()).filter(Boolean)) {
-    for (const [field, label] of [['role', roleLabel], ['organization', organizationLabel], ['dates', datesLabel]]) {
+    for (const [field, label] of [['role', roleLabel], ['organization', organizationLabel], ['dates', datesLabel], ['description', descriptionLabel]]) {
       const match = part.match(label);
       if (match) {
         fields[field] = part.slice(match[0].length).trim();
@@ -92,10 +91,18 @@ function localExperience(value, lineId = '') {
       }
     }
   }
-  if (hasLabels) {
+  return hasLabels ? fields : null;
+}
+
+function localExperience(value, lineId = '') {
+  const evidence = value.trim();
+  if (!evidence || evidence.length > 500) return null;
+  const content = evidence.replace(/^(?:[-*•▪]\s+|\d+[.)]\s+)/u, '').trim();
+  const fields = localExperienceFields(content);
+  if (fields) {
     if (!fields.role) return null;
     const dates = fields.dates && localWholeDate.test(fields.dates) ? fields.dates : '';
-    return { role: fields.role, organization: fields.organization ?? '', dates, date_line_id: dates ? lineId : '', description: '', evidence };
+    return { role: fields.role, organization: fields.organization ?? '', dates, date_line_id: dates ? lineId : '', description: fields.description ?? '', evidence };
   }
 
   if ((value.match(/\(x=\d+\)/gu) ?? []).length > 1) return null;
@@ -110,7 +117,7 @@ function localExperience(value, lineId = '') {
   }
 
   const dated = content.match(localDateSuffix);
-  const body = (dated ? content.slice(0, dated.index).replace(/[,:;(—–|\-]\s*$/u, '').trim() : content)
+  const body = (dated ? content.slice(0, dated.index).replace(/[,،:;(—–|\-]\s*$/u, '').trim() : content)
     .split(/[;؛]/u)[0].trim();
   const dates = dated?.[1] ?? '';
   const english = body.match(/^(.{2,100}?)\s+(?:at|@)\s+(.{2,160})$/iu);
@@ -118,14 +125,16 @@ function localExperience(value, lineId = '') {
     ?? body.match(/^(.{2,100}?)\s+في\s+((?:شركة|مؤسسة|منظمة|مستشفى|جامعة|مدرسة|وزارة|مركز|بنك|هيئة|معهد|أكاديمية)\s+.{2,150})$/iu);
   const paired = english ?? arabic;
   if (!paired || !validLocalRole(paired[1])) return null;
-  return { role: paired[1].trim(), organization: paired[2].trim(), dates, date_line_id: dates ? lineId : '', description: '', evidence };
+  // An unsupported date-like suffix is not part of a reliably identified employer.
+  const organization = /[0-9٠-٩]{4}/u.test(paired[2]) ? '' : paired[2].trim();
+  return { role: paired[1].trim(), organization, dates, date_line_id: dates ? lineId : '', description: '', evidence };
 }
 
 export function analyzeLocalText(source) {
   const skills = [];
   const experiences = [];
   const seen = new Set();
-  const seenExperiences = new Set();
+  let labeledExperience = null;
   let inSkillsSection = false;
   let inExperiencesSection = false;
   for (const rawLine of source.split('\n')) {
@@ -136,6 +145,7 @@ export function analyzeLocalText(source) {
     if (allowedHeading !== -1) {
       inSkillsSection = true;
       inExperiencesSection = false;
+      labeledExperience = null;
       const match = cells[allowedHeading].match(localSkillHeading);
       // Only use text attached to the approved heading; ignore other PDF columns.
       if (match[1]) collect(match[1]);
@@ -145,21 +155,24 @@ export function analyzeLocalText(source) {
     if (experienceHeading) {
       inSkillsSection = false;
       inExperiencesSection = true;
+      labeledExperience = null;
       if (experienceHeading[1] && cells.length === 1) addExperience(experienceHeading[1], lineId, row);
       continue;
     }
     if (cells.some(cell => otherSectionHeading.test(cell))) {
       inSkillsSection = false;
       inExperiencesSection = false;
+      labeledExperience = null;
       continue;
     }
     // Multiple visual columns are ambiguous; never assign their values to a job or a skill.
-    if (cells.length !== 1) continue;
+    if (cells.length !== 1) { labeledExperience = null; continue; }
     if (inSkillsSection) collect(cells[0]);
     if (inExperiencesSection) addExperience(cells[0], lineId, row);
   }
 
   function collect(line) {
+    if (skills.length >= 80) return;
     const names = line.replace(/^(?:[-*•▪]\s+|\d+[.)]\s+)/u, '')
       .split(/[,،;؛•▪|]/u).map(name => name.trim()).filter(Boolean);
     for (const name of names) {
@@ -177,18 +190,36 @@ export function analyzeLocalText(source) {
     }
   }
   function addExperience(value, lineId, rawRow) {
-    if (experiences.length >= 80) return;
     const evidence = rawRow.replace(/\(x=\d+\)\s*/gu, '').trim();
+    const fields = localExperienceFields(value);
+    // Only explicit, immediately consecutive labels may complete a multi-line record.
+    // An unlabelled line or ambiguous row clears this association instead of guessing.
+    if (labeledExperience && fields && !fields.role && evidence.length <= 500) {
+      if (labeledExperience.evidence.length + evidence.length + 1 > 3000) { labeledExperience = null; return; }
+      const dates = fields.dates && localWholeDate.test(fields.dates) ? fields.dates : '';
+      if ((fields.organization && labeledExperience.organization && fields.organization !== labeledExperience.organization)
+        || (dates && labeledExperience.dates && dates !== labeledExperience.dates)) {
+        labeledExperience = null;
+        return;
+      }
+      if (fields.organization) labeledExperience.organization = fields.organization;
+      if (dates) { labeledExperience.dates = dates; labeledExperience.date_line_id = lineId; }
+      if (fields.description) labeledExperience.description = [labeledExperience.description, fields.description].filter(Boolean).join('\n');
+      labeledExperience.evidence += '\n' + evidence;
+      return;
+    }
+    labeledExperience = null;
+    if (experiences.length >= 80) return;
     const experience = localExperience(value, lineId);
     if (!experience) return;
     experience.evidence = evidence;
-    const identity = normalize(`${experience.role}|${experience.organization}|${experience.dates}`);
-    if (seenExperiences.has(identity)) return;
-    seenExperiences.add(identity);
     experiences.push(experience);
+    if (fields?.role) labeledExperience = experience;
   }
   return {
-    skills, certificates: [], experiences, education: [], projects: [], activities: [],
+    skills, certificates: [], experiences: experiences.filter((item, index, all) => all.findIndex(other =>
+      normalize(`${other.role}|${other.organization}|${other.dates}`) === normalize(`${item.role}|${item.organization}|${item.dates}`)) === index),
+    education: [], projects: [], activities: [],
     warnings: ['تحليل محلي محدود دون Groq: استخرجنا المهارات الحرفية من أقسام المهارات المعتمدة والخبرات فقط عندما وردت بوضوح في قسمها مع دليل من النص. لم نخمن المسميات أو الجهات أو الفترات، وقد لا نلتقط الخبرة المكتوبة بتنسيق غير واضح؛ بقية الأقسام غير مستخرجة محليًا.'],
   };
 }
