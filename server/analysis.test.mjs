@@ -79,6 +79,7 @@ test('local mode extracts explicit English work experience with exact evidence a
   const experience = 'Senior Data Analyst at Sample Labs, Jan 2021 – Present';
   const source = [
     'Technical Skills: Python, SQL',
+    'Experience:',
     `[P1L4 y=250] (x=20) ${experience}`,
     'Education: Bachelor of Science in Computing',
     'Engineer at an unrelated organization, 2020',

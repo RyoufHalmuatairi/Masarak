@@ -70,7 +70,7 @@ const localDateSuffix = new RegExp(`(?:\\s*[,;(—–|\\-]\\s*|\\s+(?:from|since
 function validLocalRole(value) {
   const role = value.trim();
   return role.length >= 2 && role.length <= 100 && !/[.!?؟]$/u.test(role)
-    && !/^(?:built|developed|created|implemented|designed|managed|maintained|supported|assisted|conducted|analyzed|delivered|coordinated|provided|improved|worked|ساهمت|طورت|أنشأت|صممت|نفذت|أدرت|قدت|شاركت|حللت|قدمت|حسنت|تابعت|أشرفت|ساعدت|قمت|عملت على)\b/iu.test(role);
+    && !/^(?:built|developed|created|implemented|designed|managed|maintained|supported|assisted|conducted|analyzed|delivered|coordinated|provided|improved|worked|ساهمت|طورت|أنشأت|صممت|نفذت|أدرت|قدت|شاركت|حللت|قدمت|حسنت|تابعت|أشرفت|ساعدت|قمت|عملت على)(?=$|\s)/iu.test(role);
 }
 
 function localExperience(value, lineId = '') {
