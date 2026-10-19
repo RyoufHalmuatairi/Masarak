@@ -75,6 +75,59 @@ test('local mode ignores nonapproved headings, sentence fragments, and other vis
   assert.deepEqual((await analyzeText(source)).skills, []);
 });
 
+test('local mode extracts explicit English work experience with exact evidence and its source date line', async () => {
+  const experience = 'Senior Data Analyst at Sample Labs, Jan 2021 – Present';
+  const source = [
+    'Technical Skills: Python, SQL',
+    `[P1L4 y=250] (x=20) ${experience}`,
+    'Education: Bachelor of Science in Computing',
+    'Engineer at an unrelated organization, 2020',
+  ].join('\n');
+  const local = await analyzeText(source, { fetchImpl: async () => { throw new Error('Local mode must not call a provider.'); } });
+  assert.deepEqual(local.skills.map(item => item.name), ['Python', 'SQL']);
+  assert.equal(local.experiences.length, 1);
+  assert.deepEqual(local.experiences[0], {
+    role: 'Senior Data Analyst', organization: 'Sample Labs', dates: 'Jan 2021 – Present',
+    date_line_id: 'P1L4', description: '', evidence: experience,
+  });
+});
+
+test('local mode extracts Arabic work experience and preserves Arabic dates without inference', async () => {
+  const experience = 'مهندسة برمجيات لدى شركة آفاق، يناير ٢٠٢٢ - مارس ٢٠٢٤';
+  const source = ['الخبرات العملية:', `[D1L2] ${experience}`, 'الشهادات: شهادة مهنية، ٢٠٢٣'].join('\n');
+  const local = await analyzeText(source, { fetchImpl: async () => { throw new Error('Local mode must not call a provider.'); } });
+  assert.equal(local.experiences.length, 1);
+  assert.deepEqual(local.experiences[0], {
+    role: 'مهندسة برمجيات', organization: 'شركة آفاق', dates: 'يناير ٢٠٢٢ - مارس ٢٠٢٤',
+    date_line_id: 'D1L2', description: '', evidence: experience,
+  });
+  assert.deepEqual(local.certificates, []);
+});
+
+test('local mode leaves unclear experience empty and never turns actions or ambiguous PDF columns into jobs', async () => {
+  const source = [
+    'Experience:',
+    'Built a dashboard at Sample Labs during 2024.',
+    'Supported the release at Example Company.',
+    '[P1L4 y=250] (x=20) Software Engineer | (x=600) Example Company, 2022–2023',
+    'Projects: Product Designer at a fictional employer, 2021',
+    'Education: Engineer at a fictional employer, 2020',
+  ].join('\n');
+  const local = await analyzeText(source, { fetchImpl: async () => { throw new Error('Local mode must not call a provider.'); } });
+  assert.deepEqual(local.experiences, []);
+  assert.deepEqual(local.projects, []);
+  assert.match(local.warnings[0], /لا نخمن|لم نخمن/);
+});
+
+test('local mode accepts an explicit role while leaving unstated employer and dates blank', async () => {
+  const source = 'Work Experience:\nRole: Product Designer\nSkills: Figma';
+  const local = await analyzeText(source);
+  assert.deepEqual(local.experiences, [{
+    role: 'Product Designer', organization: '', dates: '', date_line_id: '', description: '', evidence: 'Role: Product Designer',
+  }]);
+  assert.deepEqual(local.skills.map(item => item.name), ['Figma']);
+});
+
 function matchSkillId(name) {
   return dictionary.find(entry => entry.aliases.some(alias => alias.toLowerCase() === name.toLowerCase()))?.id ?? null;
 }

@@ -123,27 +123,40 @@ function localExperience(value, lineId = '') {
 
 export function analyzeLocalText(source) {
   const skills = [];
+  const experiences = [];
   const seen = new Set();
+  const seenExperiences = new Set();
   let inSkillsSection = false;
+  let inExperiencesSection = false;
   for (const rawLine of source.split('\n')) {
-    if (skills.length >= 80) break;
-    const row = rawLine.replace(/^\[[PD]\d+L\d+(?: y=\d+)?\]\s*/, '');
+    const lineId = rawLine.match(/^\[([PD]\d+L\d+)(?: y=\d+)?\]\s*/u)?.[1] ?? '';
+    const row = rawLine.replace(/^\[[PD]\d+L\d+(?: y=\d+)?\]\s*/u, '');
     const cells = row.split(/\(x=\d+\)| \| /u).map(cell => cell.trim()).filter(Boolean);
     const allowedHeading = cells.findIndex(cell => localSkillHeading.test(cell));
     if (allowedHeading !== -1) {
       inSkillsSection = true;
+      inExperiencesSection = false;
       const match = cells[allowedHeading].match(localSkillHeading);
       // Only use text attached to the approved heading; ignore other PDF columns.
       if (match[1]) collect(match[1]);
       continue;
     }
-    if (cells.some(cell => otherSectionHeading.test(cell))) {
+    const experienceHeading = cells.map(cell => cell.match(localExperienceHeading)).find(Boolean);
+    if (experienceHeading) {
       inSkillsSection = false;
+      inExperiencesSection = true;
+      if (experienceHeading[1] && cells.length === 1) addExperience(experienceHeading[1], lineId, row);
       continue;
     }
-    // Multiple visual columns are ambiguous; never treat unrelated cells as skills.
-    if (!inSkillsSection || cells.length !== 1) continue;
-    collect(cells[0]);
+    if (cells.some(cell => otherSectionHeading.test(cell))) {
+      inSkillsSection = false;
+      inExperiencesSection = false;
+      continue;
+    }
+    // Multiple visual columns are ambiguous; never assign their values to a job or a skill.
+    if (cells.length !== 1) continue;
+    if (inSkillsSection) collect(cells[0]);
+    if (inExperiencesSection) addExperience(cells[0], lineId, row);
   }
 
   function collect(line) {
@@ -163,9 +176,20 @@ export function analyzeLocalText(source) {
       if (skills.length >= 80) break;
     }
   }
+  function addExperience(value, lineId, rawRow) {
+    if (experiences.length >= 80) return;
+    const evidence = rawRow.replace(/\(x=\d+\)\s*/gu, '').trim();
+    const experience = localExperience(value, lineId);
+    if (!experience) return;
+    experience.evidence = evidence;
+    const identity = normalize(`${experience.role}|${experience.organization}|${experience.dates}`);
+    if (seenExperiences.has(identity)) return;
+    seenExperiences.add(identity);
+    experiences.push(experience);
+  }
   return {
-    skills, certificates: [], experiences: [], education: [], projects: [], activities: [],
-    warnings: ['تحليل محلي محدود: استخرجنا المهارات المكتوبة حرفيًا فقط تحت عناوين المهارات المعتمدة وربطنا المعروف منها بالقاموس. لم نخمن معلومات؛ بقية الأقسام غير مستخرجة محليًا.'],
+    skills, certificates: [], experiences, education: [], projects: [], activities: [],
+    warnings: ['تحليل محلي محدود دون Groq: استخرجنا المهارات الحرفية من أقسام المهارات المعتمدة والخبرات فقط عندما وردت بوضوح في قسمها مع دليل من النص. لم نخمن المسميات أو الجهات أو الفترات، وقد لا نلتقط الخبرة المكتوبة بتنسيق غير واضح؛ بقية الأقسام غير مستخرجة محليًا.'],
   };
 }
 
