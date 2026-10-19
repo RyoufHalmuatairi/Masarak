@@ -8,7 +8,7 @@ const compile = file => ts.transpileModule(fs.readFileSync(path.join(root, file)
 }).outputText;
 
 // Runs real handlers/effects with synthetic sessions; never contacts any provider.
-module.exports = function harness(file, { provider = false, session = null, getSessionFailure = false, getUserFailure = false, signOutFailure = false, platform = 'web', moduleOverrides = {} } = {}) {
+module.exports = function harness(file, { provider = false, session = null, getSessionFailure = false, getUserFailure = false, signOutFailure = false, platform = 'web', moduleOverrides = {}, renderComponents = false } = {}) {
   const slots = [], queued = [], intervals = new Map(), routes = [], owners = [], cleanups = [];
   let cursor = 0, dirty = true, tree, clock = 100000, incoming = null, listener, saved = session;
   const calls = { send: [], verify: [], update: [], setSession: [], signOut: [] };
@@ -54,7 +54,7 @@ module.exports = function harness(file, { provider = false, session = null, getS
     useContext: () => auth,
   };
   const router = { replace: route => routes.push(route), push: route => routes.push(route), canGoBack: () => false, back() {} };
-  const jsx = (type, props) => ({ type, props });
+  const jsx = (type, props) => renderComponents && typeof type === 'function' ? type(props) : ({ type, props });
   const browser = {
     location: { origin: 'https://app.example.test', pathname: '/auth-callback' },
     history: { state: null, replaceState: (_state, _title, url) => cleanups.push(url) },
@@ -79,15 +79,23 @@ module.exports = function harness(file, { provider = false, session = null, getS
   Object.assign(mocks, moduleOverrides);
   class ClockDate extends Date { static now() { return clock; } }
   const globals = { Date: ClockDate, Error, URL, URLSearchParams, Promise, Map, Set, window: browser,
+    process: { env: { EXPO_PUBLIC_CV_API_URL: 'https://app.example.test/api/cv' } }, __DEV__: true,
+    Blob, FormData, AbortController, setTimeout, clearTimeout,
     setInterval: fn => { const id = intervals.size + 1; intervals.set(id, fn); return id; },
     clearInterval: id => intervals.delete(id) };
   const cache = {};
-  function load(name) {
+  function load(name, from = path.join(root, file)) {
     if (mocks[name]) return mocks[name];
-    if (cache[name]) return cache[name];
-    const relative = name.replace('../utils/', '');
-    const exports = {}; cache[name] = exports;
-    vm.runInNewContext(compile(`src/utils/${relative}.ts`), { ...globals, exports, require: load });
+    const location = path.resolve(path.dirname(from), name);
+    for (const [key, value] of Object.entries(mocks)) {
+      if (key.startsWith('.') && path.resolve(root, path.dirname(file), key) === location) return value;
+    }
+    if (cache[location]) return cache[location];
+    if (/\.(?:json|mjs)$/u.test(location)) return require(location);
+    const actual = ['.ts', '.tsx', ''].map(extension => location + extension).find(candidate => fs.existsSync(candidate));
+    if (!actual) throw new Error(`Unknown fixture dependency ${name}`);
+    const exports = {}; cache[location] = exports;
+    vm.runInNewContext(compile(path.relative(root, actual)), { ...globals, exports, require: name => load(name, actual) });
     return exports;
   }
   const exports = {};
@@ -106,13 +114,15 @@ module.exports = function harness(file, { provider = false, session = null, getS
   const text = node => Array.isArray(node) ? node.map(text).join('') : node && typeof node === 'object' ? text(node.props?.children) : typeof node === 'string' || typeof node === 'number' ? String(node) : '';
   render();
   return {
-    api, auth, calls, routes, owners, cleanups, fixture, flush, emit,
+    api, auth, calls, routes, owners, cleanups, fixture, flush, emit, module: name => load(name),
     value: () => tree.props.value,
     text: () => text(tree),
+    nodes: () => nodes(tree),
     input: label => nodes(tree).find(n => n.type === 'TextInput' && n.props.accessibilityLabel === label),
     button: label => nodes(tree).find(n => n.type === 'Pressable' && text(n) === label),
     async fill(label, value) { this.input(label).props.onChangeText(value); dirty = true; await flush(); },
     async press(label) { const b = this.button(label); if (!b || b.props.disabled) throw new Error(`Unavailable button: ${label}`); b.props.onPress(); await flush(); },
+    async act(callback) { callback(nodes(tree)); dirty = true; await flush(); },
     async updateAuth(change) { Object.assign(auth, change); dirty = true; await flush(); },
     async setLink(value) { incoming = value; dirty = true; await flush(); },
     async advance(ms) { clock += ms; for (const tick of intervals.values()) tick(); await flush(); },

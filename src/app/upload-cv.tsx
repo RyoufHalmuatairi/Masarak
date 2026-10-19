@@ -1,18 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CV_MIME_TYPES, formatCvSize } from '../utils/cv-file';
 import { getValidatedCvFile } from '../utils/cv-upload-file';
 import { analyzeCv } from '../utils/cv-api';
-import { readSkillProfile, saveReviewedCv, clearReviewedCv, type CvAnalysis, type CvProfile } from '../utils/skill-profile';
+import { readSkillProfile, saveReviewedCv, clearReviewedCv, type CvProfile } from '../utils/skill-profile';
 import dataset from '../masarak_dataset.json';
 import { careerTitles } from '../utils/career-matches';
-import { createSkillMatcher } from '../utils/skill-matching.mjs';
 import { captureDataScope } from '../utils/scoped-storage';
 import { loadSavedCv, storeCvFile, storeCvReview, deleteSavedCv } from '../utils/saved-cv';
-const matchSkillName = createSkillMatcher(dataset);
+import { approvedCvAnalysis, createCvReview, cvReviewCounts, normalizeCvReview } from '../utils/cv-review';
+import type { CvReview } from '../utils/saved-cv.types';
+import type { CvSection, ReviewSection } from '../utils/cv-review';
+import CvReviewSections from '../components/cv/CvReviewSections';
+
 function skillScoreNote(id: string | null) {
   if (!id) return 'لم نجد ربطًا موثوقًا لهذا الاسم؛ تُحفظ المهارة للمراجعة ولا نحتسبها بالتخمين.';
   const core = dataset.career_skills.filter(row => row.skill_id === id && row.priority === 'core').map(row => careerTitles[row.career_id] ?? row.career_id);
@@ -20,6 +23,15 @@ function skillScoreNote(id: string | null) {
   if (dataset.career_skills.some(row => row.skill_id === id)) return 'مهارة مساندة مرتبطة بمسارات؛ تظهر في ملفك والخطة، ولا تغير نسبة المتطلبات الأساسية.';
   return 'مهارة معروفة في القاموس ومحفوظة، لكنها ليست ضمن متطلبات المسارات الستة الحالية.';
 }
+
+const sectionNames: Record<CvSection, string> = {
+  skills: 'المهارات',
+  projects: 'المشاريع',
+  courses: 'الدورات',
+  certificates: 'الشهادات',
+  education: 'التعليم',
+  experiences: 'الخبرات',
+};
 
 export default function UploadCvScreen() {
   const router = useRouter();
@@ -30,14 +42,12 @@ export default function UploadCvScreen() {
   const [consent, setConsent] = useState(false);
   const [ready, setReady] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [analysis, setAnalysis] = useState<CvAnalysis | null>(null);
+  const [review, setReview] = useState<CvReview | null>(null);
   const [savedCv, setSavedCv] = useState<CvProfile | null>(null);
-  const [includedSkills, setIncludedSkills] = useState<number[]>([]);
-  const [includedCertificates, setIncludedCertificates] = useState<number[]>([]);
-  const [includedExperiences, setIncludedExperiences] = useState<number[]>([]);
-  const [includedExtras, setIncludedExtras] = useState<Record<'education' | 'projects' | 'activities', number[]>>({ education: [], projects: [], activities: [] });
   const locked = useRef(false);
   const active = useRef(true);
+  const analysis = review?.analysis ?? null;
+
   useFocusEffect(useCallback(() => {
     active.current = true;
     void Promise.all([readSkillProfile(), loadSavedCv()]).then(([profile, saved]) => {
@@ -45,11 +55,7 @@ export default function UploadCvScreen() {
       setSavedCv(profile?.cv ?? null);
       if (saved) {
         setFile(saved.asset);
-        setAnalysis(saved.review?.analysis ?? null);
-        setIncludedSkills(saved.review?.skills ?? []);
-        setIncludedCertificates(saved.review?.certificates ?? []);
-        setIncludedExperiences(saved.review?.experiences ?? []);
-        setIncludedExtras({ education: saved.review?.education ?? [], projects: saved.review?.projects ?? [], activities: saved.review?.activities ?? [] });
+        setReview(saved.review ? normalizeCvReview(saved.review) : null);
       }
     }).catch(() => { if (active.current) setError('تعذر استرجاع السيرة المحفوظة. حاول فتح الصفحة مجددًا.'); })
       .finally(() => { if (active.current) setReady(true); });
@@ -57,10 +63,10 @@ export default function UploadCvScreen() {
   }, []));
 
   useEffect(() => {
-    if (!ready || !file || !analysis || busy) return;
-    void storeCvReview(file.uri, { analysis, skills: includedSkills, certificates: includedCertificates, experiences: includedExperiences, ...includedExtras })
+    if (!ready || !file || !review || busy) return;
+    void storeCvReview(file.uri, review)
       .catch(() => setError('تعذر حفظ تعديلات المراجعة. حاول مجددًا قبل إغلاق التطبيق.'));
-  }, [ready, file, analysis, busy, includedSkills, includedCertificates, includedExperiences, includedExtras]);
+  }, [ready, file, review, busy]);
 
   async function removeCv() {
     const scope = captureDataScope();
@@ -70,8 +76,7 @@ export default function UploadCvScreen() {
       await clearReviewedCv();
       scope.assertCurrent();
       await deleteSavedCv();
-      setFile(null); setAnalysis(null); setSavedCv(null); setConsent(false); setConfirmDelete(false);
-      setIncludedSkills([]); setIncludedCertificates([]); setIncludedExperiences([]); setIncludedExtras({ education: [], projects: [], activities: [] });
+      setFile(null); setReview(null); setSavedCv(null); setConsent(false); setConfirmDelete(false);
     } catch { setError('تعذر إكمال حذف السيرة. حاول مجددًا.'); }
     finally { locked.current = false; setBusy(false); }
   }
@@ -89,7 +94,7 @@ export default function UploadCvScreen() {
       await getValidatedCvFile(selected);
       scope.assertCurrent();
       const saved = await storeCvFile(selected);
-      setFile(saved.asset); setAnalysis(null); setConsent(false); setConfirmDelete(false);
+      setFile(saved.asset); setReview(null); setConsent(false); setConfirmDelete(false);
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'تعذر اختيار الملف.'); }
     finally { locked.current = false; setBusy(false); }
   }
@@ -101,131 +106,150 @@ export default function UploadCvScreen() {
     try {
       const result = await analyzeCv(file);
       scope.assertCurrent();
-      await storeCvReview(file.uri, { analysis: result, skills: result.skills.map((_, index) => index), certificates: result.certificates.map((_, index) => index), experiences: result.experiences.map((_, index) => index), education: (result.education ?? []).map((_, index) => index), projects: (result.projects ?? []).map((_, index) => index), activities: (result.activities ?? []).map((_, index) => index) });
+      const nextReview = createCvReview(result);
+      await storeCvReview(file.uri, nextReview);
       if (!active.current) return;
-      setAnalysis(result);
-      setIncludedSkills(result.skills.map((_, index) => index));
-      setIncludedCertificates(result.certificates.map((_, index) => index));
-      setIncludedExperiences(result.experiences.map((_, index) => index));
-      setIncludedExtras({ education: (result.education ?? []).map((_, index) => index), projects: (result.projects ?? []).map((_, index) => index), activities: (result.activities ?? []).map((_, index) => index) });
+      setReview(nextReview);
     } catch (failure) { if (active.current) setError(failure instanceof Error ? failure.message : 'تعذر التحليل.'); }
     finally { locked.current = false; setBusy(false); }
   }
 
   async function approve() {
     const scope = captureDataScope();
-    if (!analysis || locked.current) return;
+    if (!review || locked.current) return;
     locked.current = true; setBusy(true); setStatus('جارٍ حفظ المعلومات…'); setError('');
     try {
-      const reviewed: CvAnalysis = {
-        skills: analysis.skills.filter((_, index) => includedSkills.includes(index)),
-        certificates: analysis.certificates.filter((_, index) => includedCertificates.includes(index)),
-        experiences: analysis.experiences.filter((_, index) => includedExperiences.includes(index)),
-        education: (analysis.education ?? []).filter((_, index) => includedExtras.education.includes(index)),
-        projects: (analysis.projects ?? []).filter((_, index) => includedExtras.projects.includes(index)),
-        activities: (analysis.activities ?? []).filter((_, index) => includedExtras.activities.includes(index)), warnings: analysis.warnings,
-      };
-      if (reviewed.skills.some(item => !item.name.trim()) || reviewed.certificates.some(item => !item.name.trim()) || reviewed.experiences.some(item => !item.role.trim()) || [reviewed.education, reviewed.projects, reviewed.activities].some(items => items?.some(item => !item.name.trim()))) throw new Error('أكمل أسماء المعلومات التي تريد حفظها أو ألغِ اختيارها.');
-      if (file) await storeCvReview(file.uri, { analysis, skills: includedSkills, certificates: includedCertificates, experiences: includedExperiences, ...includedExtras });
+      const selectedSections: ReviewSection[] = ['skills', 'projects', 'courses', 'certificates', 'education', 'experiences', 'activities'];
+      const hasUnnamedSelected = selectedSections.some(section => {
+        const indexes = review[section] ?? [];
+        const rows = review.analysis[section] ?? [];
+        return indexes.some(index => {
+          const row = rows[index] as unknown as Record<string, string> | undefined;
+          return row && !(section === 'experiences' ? row.role ?? '' : row.name ?? '').trim();
+        });
+      });
+      if (hasUnnamedSelected) throw new Error('أكمل أسماء المعلومات التي تريد حفظها أو ألغِ اختيارها.');
+      if (file) await storeCvReview(file.uri, review);
       scope.assertCurrent();
-      await saveReviewedCv(reviewed);
+      await saveReviewedCv(approvedCvAnalysis(review));
       router.replace('/home');
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'تعذر الحفظ.'); }
     finally { locked.current = false; setBusy(false); }
   }
 
-  function toggle(list: number[], index: number, update: (value: number[]) => void) {
-    update(list.includes(index) ? list.filter(value => value !== index) : [...list, index]);
-  }
   function selection(label: string, selected: boolean, onPress: () => void) {
-    return <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selected, disabled: busy }} disabled={busy} onPress={onPress}><Text style={styles.link}>{selected ? '✓' : '□'} {label}</Text></Pressable>;
+    return <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selected, disabled: busy }} disabled={busy} onPress={onPress} style={styles.consentRow}>
+      <View style={[styles.checkbox, selected && styles.checkboxSelected]}><Text style={styles.checkboxMark}>{selected ? '✓' : ''}</Text></View>
+      <Text style={styles.consentText}>{label}</Text>
+    </Pressable>;
   }
+
+  const approvedCounts = review ? cvReviewCounts(review) : null;
+  const savedCounts = savedCv ? cvReviewCounts(createCvReview(savedCv)) : null;
 
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.canGoBack() ? router.back() : router.replace('/home')}><Text style={styles.link}>العودة</Text></Pressable>
-        <Text style={styles.title}>سيرتك الذاتية</Text>
-        <Text style={styles.text}>راجع مهاراتك وتعليمك وشهاداتك وخبراتك ومشاريعك وأنشطتك قبل اعتمادها.</Text>
+        <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.canGoBack() ? router.back() : router.replace('/home')} style={styles.backButton}>
+          <Text style={styles.backText}>العودة</Text><Text style={styles.backArrow}>←</Text>
+        </Pressable>
+        <View style={styles.hero}>
+          <Text style={styles.eyebrow}>ملفك المهني · مراجعة قبل الاعتماد</Text>
+          <Text style={styles.title}>سيرتك الذاتية، كما كتبتها أنت</Text>
+          <Text style={styles.intro}>راجع كل معلومة ودليلها، وصحّح القسم قبل أن تختار مسارك المهني.</Text>
+        </View>
+
         <View style={styles.card}>
-          <Text style={styles.heading}>{file ? 'سيرتك المحفوظة' : 'اختر ملف السيرة'}</Text>
-          <Text style={styles.text}>PDF فقط، حتى 10 ميجابايت، ويجب أن يحتوي نصًا مقروءًا. الصور وملفات Word وPDF الممسوح ضوئيًا دون نص غير مدعومة.</Text>
-          <Pressable style={[styles.button, busy && styles.disabled]} accessibilityRole="button" disabled={busy || !ready} onPress={() => void pickCv()}><Text style={styles.buttonText}>{file ? 'اختيار ملف آخر' : 'اختيار السيرة من الملفات'}</Text></Pressable>
+          <View style={styles.cardHeader}>
+            <View style={styles.fileIcon}><Text style={styles.fileIconText}>PDF</Text></View>
+            <View style={styles.cardHeaderCopy}>
+              <Text style={styles.heading}>{file ? 'ملف السيرة المحفوظ' : 'ابدأ بملف السيرة'}</Text>
+              <Text style={styles.note}>PDF فقط · حتى 10 ميجابايت</Text>
+            </View>
+          </View>
+          <Text style={styles.text}>يجب أن يحتوي الملف نصًا قابلًا للقراءة. الصور وملفات Word وملفات PDF الممسوحة ضوئيًا دون نص غير مدعومة.</Text>
+          <Pressable style={[styles.button, busy && styles.disabled]} accessibilityRole="button" disabled={busy || !ready} onPress={() => void pickCv()}>
+            <Text style={styles.buttonText}>{file ? 'اختيار ملف آخر' : 'اختيار السيرة من الملفات'}</Text>
+          </Pressable>
           {file ? <>
-            <Text style={styles.fileName}>{file.name}</Text><Text style={styles.text}>{formatCvSize(file.size)}</Text>
+            <View style={styles.fileMeta}><Text style={styles.fileName}>{file.name}</Text><Text style={styles.fileSize}>{formatCvSize(file.size)}</Text></View>
             {selection('أوافق على تحليل محتوى السيرة؛ وقد يُرسل نصها إلى Groq إذا كانت الخدمة مفعّلة.', consent, () => setConsent(!consent))}
-            <Text style={styles.note}>دون Groq، هذا استخراج محدود بقواعد وليس تحليل ذكاء اصطناعي كاملًا. يلتقط المهارات الحرفية والخبرات الواضحة تحت أقسامها بأدلة من النص؛ وقد يفوّت التنسيقات المعقدة ولا يخمّن معلومات أو يستخرج بقية الأقسام. عند تفعيل Groq قد يُرسل نص السيرة إلى مزوّد خارجي؛ لن يبدأ التحليل قبل موافقتك.</Text>
-            <Pressable disabled={busy} onPress={() => void Linking.openURL('https://console.groq.com/docs/your-data').catch(() => setError('تعذر فتح صفحة سياسة البيانات.'))}><Text style={styles.link}>سياسة بيانات Groq عند تفعيله</Text></Pressable>
-            <Pressable style={[styles.button, (!consent || busy) && styles.disabled]} accessibilityRole="button" disabled={!consent || busy} onPress={() => void runAnalysis()}><Text style={styles.buttonText}>{analysis ? 'إعادة التحليل' : 'تحليل السيرة الذاتية'}</Text></Pressable>
+            <View style={styles.notice}>
+              <Text style={styles.noticeTitle}>حدود الاستخراج</Text>
+              <Text style={styles.note}>التحليل المحلي يعتمد على الأقسام والقواعد النصية للمهارات والمشاريع والدورات والشهادات والتعليم والخبرات؛ ليس فهمًا كاملًا وقد تفوته بعض التنسيقات. لا يخمّن المعلومات الناقصة. عند تفعيل Groq قد يُرسل النص إلى مزوّد خارجي؛ لن يبدأ التحليل قبل موافقتك.</Text>
+            </View>
+            <Pressable disabled={busy} onPress={() => void Linking.openURL('https://console.groq.com/docs/your-data').catch(() => setError('تعذر فتح صفحة سياسة البيانات.'))}>
+              <Text style={styles.link}>سياسة بيانات Groq عند تفعيله</Text>
+            </Pressable>
+            <Pressable style={[styles.button, styles.secondaryButton, (!consent || busy) && styles.disabled]} accessibilityRole="button" disabled={!consent || busy} onPress={() => void runAnalysis()}>
+              <Text style={styles.secondaryButtonText}>{analysis ? 'إعادة التحليل' : 'تحليل السيرة الذاتية'}</Text>
+            </Pressable>
             <Text style={styles.note}>السيرة ونتيجة التحليل محفوظتان على هذا الجهاز حتى تحذفهما. حفظ المتصفح منفصل عن حفظ الآيفون، وقد يُحذف عند مسح بيانات التطبيق أو المتصفح.</Text>
-            <Pressable accessibilityRole="button" disabled={busy} onPress={() => setConfirmDelete(true)}><Text style={styles.link}>حذف السيرة المحفوظة</Text></Pressable>
-            {confirmDelete ? <View>
+            <Pressable accessibilityRole="button" disabled={busy} onPress={() => setConfirmDelete(true)} style={styles.deleteAction}><Text style={styles.deleteText}>حذف السيرة المحفوظة</Text></Pressable>
+            {confirmDelete ? <View style={styles.confirmBox}>
               <Text style={styles.text}>هل تريد حذف ملف السيرة ونتيجة تحليلها والمعلومات المعتمدة منها؟ المهارات المختارة وخطة التعلم تبقيان؛ يمكنك تعديلهما من الرئيسية.</Text>
-              <Pressable accessibilityRole="button" disabled={busy} onPress={() => void removeCv()}><Text style={styles.error}>نعم، حذف السيرة</Text></Pressable>
+              <Pressable accessibilityRole="button" disabled={busy} onPress={() => void removeCv()}><Text style={styles.deleteText}>نعم، حذف السيرة</Text></Pressable>
               <Pressable accessibilityRole="button" disabled={busy} onPress={() => setConfirmDelete(false)}><Text style={styles.link}>إلغاء</Text></Pressable>
             </View> : null}
           </> : null}
         </View>
-        {!ready ? <Text style={styles.text}>جارٍ استرجاع سيرتك…</Text> : null}
-        {busy ? <View><ActivityIndicator color="#12635E" /><Text style={styles.text}>{status}</Text></View> : null}
-        {error ? <Text style={styles.error} accessibilityRole="alert">{error}</Text> : null}
-        {analysis ? <>
-          <Text style={styles.heading}>راجع المعلومات المستخرجة</Text>
-          <Text style={styles.text}>يمكن أن يخطئ التحليل. صحح النصوص وألغِ اختيار المعلومات غير الصحيحة. ربط المهارة بقاموس مسارك اقتراح يحتاج مراجعتك.</Text>
-          {analysis.warnings.map((warning, index) => <Text key={index} style={styles.note}>{warning}</Text>)}
-          <Text style={styles.heading}>المهارات ({analysis.skills.length})</Text>
-          {!analysis.skills.length ? <Text style={styles.note}>لم نستخرج مهارات مدعومة بنص واضح.</Text> : null}
-          {analysis.skills.map((skill, index) => <View key={index} style={styles.card}>
-            {selection('اعتماد هذه المهارة', includedSkills.includes(index), () => toggle(includedSkills, index, setIncludedSkills))}
-            <TextInput accessibilityLabel="اسم المهارة" style={styles.input} value={skill.name} editable={!busy} onChangeText={name => setAnalysis({ ...analysis, skills: analysis.skills.map((item, i) => i === index ? { ...item, name, mapped_skill_id: matchSkillName(name) } : item) })} />
-            <Text style={styles.note}>من السيرة: {skill.evidence}</Text>
-            <Text style={styles.text}>{skill.mapped_skill_id ? `ربط مقترح: ${dataset.skills.find(item => item.skill_id === skill.mapped_skill_id)?.name}` : 'لم نجد ربطًا موثوقًا لهذا الاسم في القاموس؛ احتفظنا به للمراجعة.'}</Text>
-            <Text style={styles.note}>{skillScoreNote(skill.mapped_skill_id)}</Text>
-            {skill.mapped_skill_id ? <Pressable disabled={busy} onPress={() => setAnalysis({ ...analysis, skills: analysis.skills.map((item, i) => i === index ? { ...item, mapped_skill_id: null } : item) })}><Text style={styles.link}>إلغاء الربط المقترح مع الاحتفاظ بالمهارة</Text></Pressable> : null}
-          </View>)}
-          {(['education', 'projects', 'activities'] as const).map(section => {
-            const title = section === 'education' ? 'التعليم والمؤهلات الجامعية' : section === 'projects' ? 'المشاريع' : 'الأنشطة والتطوع';
-            const labels = section === 'education' ? { name: 'المؤهل والتخصص', organization: 'الجهة التعليمية', dates: 'فترة الدراسة', description: 'حالة الدراسة أو تفاصيل المؤهل' } : section === 'projects' ? { name: 'اسم المشروع', organization: 'الجهة إن وجدت', dates: 'الفترة', description: 'وصف المشروع' } : { name: 'النشاط أو الدور', organization: 'الجهة أو النادي', dates: 'الفترة', description: 'وصف المشاركة' };
-            const entries = analysis[section] ?? [];
-            return <View key={section} style={{ gap: 16 }}>
-              <Text style={styles.heading}>{title} ({entries.length})</Text>
-              {analysis[section] === undefined ? <Text style={styles.note}>هذه نتيجة من الإصدار السابق. أعد التحليل لتفصيل هذا القسم.</Text> : entries.length === 0 ? <Text style={styles.note}>لم نجد معلومات واضحة لهذا القسم.</Text> : null}
-              {entries.map((entry, index) => <View key={index} style={styles.card}>
-                {selection('اعتماد هذه المعلومة', includedExtras[section].includes(index), () => setIncludedExtras({ ...includedExtras, [section]: includedExtras[section].includes(index) ? includedExtras[section].filter(value => value !== index) : [...includedExtras[section], index] }))}
-                {(['name', 'organization', 'dates', 'description'] as const).map(field => <View key={field}>
-                  <Text style={styles.note}>{labels[field]}</Text>
-                  <TextInput accessibilityLabel={labels[field]} placeholder={labels[field]} placeholderTextColor="#617570" style={styles.input} multiline={field === 'description'} editable={!busy} value={entry[field]} onChangeText={value => setAnalysis({ ...analysis, [section]: entries.map((item, i) => i === index ? { ...item, [field]: value } : item) })} />
-                </View>)}
-                <Text style={styles.note}>من السيرة: {entry.evidence}</Text>
-              </View>)}
+
+        {!ready ? <View style={styles.loadingCard}><View style={styles.skeletonLine} /><View style={styles.skeletonLineShort} /><Text style={styles.note}>جارٍ استرجاع سيرتك…</Text></View> : null}
+        {busy ? <View style={styles.progress}><ActivityIndicator color="#176B62" /><Text style={styles.text}>{status}</Text></View> : null}
+        {error ? <View style={styles.errorBox}><Text style={styles.error} accessibilityRole="alert">{error}</Text></View> : null}
+
+        {review && analysis ? <>
+          <View style={styles.reviewIntro}>
+            <Text style={styles.eyebrow}>مراجعة تفصيلية</Text>
+            <Text style={styles.heading}>المعلومة لك، والقرار لك</Text>
+            <Text style={styles.text}>الأعداد أدناه تتغير مع اعتمادك، وتحتسب العناصر الفريدة فقط. استبعد غير الصحيح، أو انقله إلى قسمه المناسب.</Text>
+            <Text style={styles.note}>لا نحتسب البند نفسه مرتين بين الدورات والشهادات. البنود غير المصنفة لا تدخل الأعداد حتى تحدد قسمها.</Text>
+          </View>
+          {analysis.warnings.map((warning, index) => <View key={`${warning}-${index}`} style={styles.warning}><Text style={styles.note}>{warning}</Text></View>)}
+          <View style={styles.countStrip}>
+            {(['skills', 'projects', 'courses', 'certificates', 'education', 'experiences'] as CvSection[]).map((section, index) => (
+              <View key={section} style={[styles.countCell, index === 5 && styles.lastCountCell]}>
+                <Text accessibilityLabel={`عدد ${sectionNames[section]} المعتمدة`} style={styles.countNumber}>{approvedCounts?.[section] ?? 0}</Text>
+                <Text style={styles.countLabel}>{sectionNames[section]}</Text>
+              </View>
+            ))}
+          </View>
+          <CvReviewSections review={review} onChange={setReview} busy={busy} analyzedAt={analysis.analyzed_at} onSkillNote={skillScoreNote} />
+          <View style={styles.approvalNote}>
+            <Text style={styles.note}>المهارات المعتمدة المرتبطة بالقاموس تُضاف إلى اختياراتك السابقة. الدورات والشهادات والتعليم والخبرات والمشاريع تُحفظ في ملف السيرة ولا تدخل نسبة تغطية المهارات.</Text>
+          </View>
+          <Pressable accessibilityRole="button" style={[styles.button, styles.approveButton, busy && styles.disabled]} disabled={busy} onPress={() => void approve()}>
+            <Text style={styles.buttonText}>اعتماد المعلومات وحفظها</Text>
+          </Pressable>
+        </> : null}
+
+        {savedCv && !review ? <View style={styles.savedBlock}>
+          <View style={styles.reviewIntro}>
+            <Text style={styles.eyebrow}>آخر اعتماد</Text>
+            <Text style={styles.heading}>معلوماتك المحفوظة</Text>
+            <Text style={styles.note}>رفع ملف جديد لا يغيّر المعلومات المحفوظة حتى تعتمد نتيجته.</Text>
+          </View>
+          <View style={styles.countStrip}>
+            {(['skills', 'projects', 'courses', 'certificates', 'education', 'experiences'] as CvSection[]).map((section, index) => (
+              <View key={section} style={[styles.countCell, index === 5 && styles.lastCountCell]}>
+                <Text style={styles.countNumber}>{savedCounts?.[section] ?? 0}</Text>
+                <Text style={styles.countLabel}>{sectionNames[section]}</Text>
+              </View>
+            ))}
+          </View>
+          {(['skills', 'projects', 'courses', 'certificates', 'education', 'experiences'] as CvSection[]).map(section => {
+            const rows = savedCv[section] ?? [];
+            const state = savedCv.section_status?.[section] ?? 'legacy';
+            const stateText = state === 'not_found' ? 'لم يظهر نص واضح؛ وهذا لا يعني عدم وجود معلومات.' : state === 'uncertain' ? 'وجد نص يحتاج إلى مراجعة أو تصنيف.' : state === 'legacy' ? 'نتيجة أقدم قد تحتاج إلى إعادة التحليل.' : 'معلومات مستخرجة ومعتمدة.';
+            return <View key={section} style={styles.savedSection}>
+              <View style={styles.savedSectionHeading}><Text style={styles.heading}>{sectionNames[section]}</Text><Text style={styles.savedCount}>{savedCounts?.[section] ?? 0}</Text></View>
+              <Text style={styles.note}>{stateText}</Text>
+              {rows.length ? rows.map((row, index) => <Text key={`${section}-${index}`} style={styles.savedEntry}>{[
+                ...Object.entries(row).filter(([key, value]) => key !== 'evidence' && key !== 'mapped_skill_id' && value && typeof value === 'string').map(([, value]) => value as string),
+                ...(Array.isArray((row as unknown as { technologies?: string[] }).technologies) ? [(row as unknown as { technologies: string[] }).technologies.join('، ')] : []),
+              ].filter(Boolean).join(' · ')}{row.evidence ? `\nالدليل: ${row.evidence}` : ''}</Text>) : <Text style={styles.note}>لا توجد معلومة معتمدة هنا. قد لا تكون استُخرجت من هذا الملف.</Text>}
             </View>;
           })}
-          <Text style={styles.heading}>الشهادات المهنية والدورات ({analysis.certificates.length})</Text>
-          {!analysis.certificates.length ? <Text style={styles.note}>لم نجد شهادات مكتملة مذكورة بوضوح.</Text> : null}
-          {analysis.certificates.map((certificate, index) => <View key={index} style={styles.card}>
-            {selection('اعتماد هذه الشهادة', includedCertificates.includes(index), () => toggle(includedCertificates, index, setIncludedCertificates))}
-            {(['name', 'issuer', 'date'] as const).map(field => <TextInput key={field} accessibilityLabel={field === 'name' ? 'اسم الشهادة' : field === 'issuer' ? 'الجهة المانحة' : 'تاريخ الشهادة'} placeholder={field === 'name' ? 'اسم الشهادة' : field === 'issuer' ? 'الجهة المانحة' : 'التاريخ إن وجد'} placeholderTextColor="#617570" style={styles.input} editable={!busy} value={certificate[field]} onChangeText={value => setAnalysis({ ...analysis, certificates: analysis.certificates.map((item, i) => i === index ? { ...item, [field]: value } : item) })} />)}
-            <Text style={styles.note}>من السيرة: {certificate.evidence}</Text>
-          </View>)}
-          <Text style={styles.heading}>خبرات العمل والتدريب ({analysis.experiences.length})</Text>
-          {!analysis.experiences.length ? <Text style={styles.note}>لم نجد خبرات عمل أو تدريب مذكورة بوضوح.</Text> : null}
-          {analysis.experiences.map((experience, index) => <View key={index} style={styles.card}>
-            {selection('اعتماد هذه الخبرة', includedExperiences.includes(index), () => toggle(includedExperiences, index, setIncludedExperiences))}
-            {(['role', 'organization', 'dates', 'description'] as const).map(field => <TextInput key={field} accessibilityLabel={field === 'role' ? 'المسمى' : field === 'organization' ? 'الجهة' : field === 'dates' ? 'الفترة' : 'وصف الخبرة'} placeholder={field === 'role' ? 'المسمى' : field === 'organization' ? 'الجهة' : field === 'dates' ? 'الفترة إن وجدت' : 'وصف الخبرة'} placeholderTextColor="#617570" style={styles.input} multiline={field === 'description'} editable={!busy} value={experience[field]} onChangeText={value => setAnalysis({ ...analysis, experiences: analysis.experiences.map((item, i) => i === index ? { ...item, [field]: value } : item) })} />)}
-            <Text style={styles.note}>من السيرة: {experience.evidence}</Text>
-          </View>)}
-          <Text style={styles.note}>المهارات المعتمدة المرتبطة بالقاموس تُضاف إلى اختياراتك السابقة. التعليم والشهادات والخبرات والمشاريع والأنشطة تُحفظ في ملف السيرة، ولا تدخل نسبة تغطية المهارات حاليًا.</Text>
-          <Pressable accessibilityRole="button" style={[styles.button, busy && styles.disabled]} disabled={busy} onPress={() => void approve()}><Text style={styles.buttonText}>اعتماد المعلومات وحفظها</Text></Pressable>
-        </> : null}
-        {savedCv && !analysis ? <View style={styles.card}>
-          <Text style={styles.heading}>آخر معلومات اعتمدتها</Text>
-          <Text style={styles.note}>رفع ملف جديد لا يغيّر المعلومات المحفوظة حتى تعتمد نتيجته.</Text>
-          <Text style={styles.text}>المهارات: {savedCv.skills.map(item => item.name).join('، ') || 'لا توجد'}</Text>
-          {(['education', 'projects', 'activities'] as const).map(section => <Text key={section} style={styles.text}>
-            {section === 'education' ? 'التعليم' : section === 'projects' ? 'المشاريع' : 'الأنشطة'}: {(savedCv[section] ?? []).map(item => [item.name, item.organization, item.dates, item.description].filter(Boolean).join(' — ')).join('\n') || 'لا توجد معلومات محفوظة'}
-          </Text>)}
-          <Text style={styles.text}>الشهادات: {savedCv.certificates.map(item => [item.name, item.issuer, item.date].filter(Boolean).join(' — ')).join('\n') || 'لا توجد'}</Text>
-          <Text style={styles.text}>الخبرات: {savedCv.experiences.map(item => [item.role, item.organization, item.dates, item.description].filter(Boolean).join(' — ')).join('\n') || 'لا توجد'}</Text>
         </View> : null}
       </ScrollView>
     </SafeAreaView>
@@ -233,19 +257,60 @@ export default function UploadCvScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8F9F5' },
-  content: { width: '100%', maxWidth: 650, alignSelf: 'center', padding: 24, paddingBottom: 60, gap: 20 },
-  title: { color: '#12635E', fontSize: 28, fontWeight: '700', textAlign: 'right' },
-  heading: { color: '#193C3B', fontSize: 20, fontWeight: '600', textAlign: 'right' },
-  card: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#DDE6E0', padding: 22, borderRadius: 18, gap: 16 },
-  text: { color: '#425F57', fontSize: 16, lineHeight: 28, textAlign: 'right' },
-  note: { color: '#617570', fontSize: 14, lineHeight: 24, textAlign: 'right' },
-  fileName: { color: '#193C3B', fontSize: 17, lineHeight: 26, textAlign: 'left' },
-  link: { color: '#12635E', fontSize: 17, paddingVertical: 12, textAlign: 'right' },
-  button: { backgroundColor: '#12635E', borderRadius: 14, minHeight: 48, padding: 16 },
-  buttonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '600', textAlign: 'center' },
-  disabled: { opacity: 0.5 },
-  error: { color: '#A33535', fontSize: 15, lineHeight: 25, textAlign: 'right' },
-  input: { color: '#193C3B', borderWidth: 1, borderColor: '#DDE6E0', borderRadius: 12, padding: 12, minHeight: 48, fontSize: 16, textAlign: 'right', backgroundColor: '#F0F4F0' },
+  screen: { flex: 1, backgroundColor: '#F4F6F1' },
+  content: { width: '100%', maxWidth: 680, alignSelf: 'center', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 64, gap: 18 },
+  backButton: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8, paddingVertical: 7, paddingHorizontal: 2 },
+  backText: { color: '#23675F', fontSize: 15, fontWeight: '700' },
+  backArrow: { color: '#23675F', fontSize: 20 },
+  hero: { paddingTop: 8, paddingBottom: 8, gap: 9 },
+  eyebrow: { color: '#997345', textAlign: 'right', fontSize: 12, fontWeight: '800', letterSpacing: 1 },
+  title: { color: '#174A46', fontSize: 29, fontWeight: '800', lineHeight: 40, textAlign: 'right' },
+  intro: { color: '#526C65', fontSize: 16, lineHeight: 27, textAlign: 'right' },
+  card: { backgroundColor: '#FFFEFA', borderWidth: 1, borderColor: '#DFE7DE', padding: 18, borderRadius: 20, gap: 15, shadowColor: '#254F46', shadowOpacity: 0.045, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 1 },
+  cardHeader: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12 },
+  cardHeaderCopy: { flex: 1, gap: 3 },
+  fileIcon: { width: 46, height: 46, borderRadius: 15, backgroundColor: '#E7F0E8', justifyContent: 'center', alignItems: 'center' },
+  fileIconText: { color: '#27685F', fontSize: 12, fontWeight: '900', letterSpacing: 0.6 },
+  heading: { color: '#193F3C', fontSize: 19, fontWeight: '700', textAlign: 'right' },
+  text: { color: '#48635B', fontSize: 15, lineHeight: 25, textAlign: 'right' },
+  note: { color: '#687C74', fontSize: 13, lineHeight: 22, textAlign: 'right' },
+  button: { backgroundColor: '#176B62', borderRadius: 14, minHeight: 50, paddingHorizontal: 16, justifyContent: 'center', alignItems: 'center' },
+  buttonText: { color: '#FFFDF7', fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  disabled: { opacity: 0.48 },
+  fileMeta: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, backgroundColor: '#F2F5EF', gap: 3 },
+  fileName: { color: '#193F3C', fontSize: 15, lineHeight: 23, textAlign: 'left' },
+  fileSize: { color: '#708079', fontSize: 12, textAlign: 'left' },
+  consentRow: { flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 10, paddingVertical: 4 },
+  checkbox: { width: 23, height: 23, borderRadius: 7, borderWidth: 1.5, borderColor: '#9CB1A7', marginTop: 2, alignItems: 'center', justifyContent: 'center' },
+  checkboxSelected: { backgroundColor: '#176B62', borderColor: '#176B62' },
+  checkboxMark: { color: '#FFFDF7', fontSize: 14, fontWeight: '800' },
+  consentText: { color: '#3F5D55', fontSize: 14, lineHeight: 23, textAlign: 'right', flex: 1 },
+  notice: { borderRightWidth: 3, borderRightColor: '#C69B63', backgroundColor: '#FAF4E8', padding: 12, gap: 5, borderRadius: 9 },
+  noticeTitle: { color: '#805D31', fontSize: 14, fontWeight: '800', textAlign: 'right' },
+  link: { color: '#176B62', fontSize: 15, paddingVertical: 6, textAlign: 'right', fontWeight: '700' },
+  secondaryButton: { backgroundColor: '#E6F0E9', borderWidth: 1, borderColor: '#D5E4D8' },
+  secondaryButtonText: { color: '#176B62', fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  deleteAction: { borderTopWidth: 1, borderTopColor: '#E6EBE5', paddingTop: 9, marginTop: 2 },
+  deleteText: { color: '#A3473E', fontSize: 15, fontWeight: '700', textAlign: 'right', paddingVertical: 7 },
+  confirmBox: { borderRadius: 14, backgroundColor: '#FAF0EC', padding: 13, gap: 4 },
+  loadingCard: { backgroundColor: '#FFFEFA', borderRadius: 16, padding: 18, gap: 11 },
+  skeletonLine: { height: 12, width: '70%', borderRadius: 6, backgroundColor: '#E7ECE5', alignSelf: 'flex-end' },
+  skeletonLineShort: { height: 10, width: '43%', borderRadius: 6, backgroundColor: '#EDF0E9', alignSelf: 'flex-end' },
+  progress: { flexDirection: 'row-reverse', gap: 10, alignItems: 'center', paddingHorizontal: 4 },
+  errorBox: { backgroundColor: '#FFF1ED', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#F0D8CF' },
+  error: { color: '#A13F35', fontSize: 14, lineHeight: 23, textAlign: 'right' },
+  reviewIntro: { gap: 7, paddingTop: 4 },
+  warning: { backgroundColor: '#FBF4E8', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#E9D8B9' },
+  countStrip: { flexDirection: 'row-reverse', flexWrap: 'wrap', backgroundColor: '#EAF0E8', borderRadius: 16, paddingVertical: 12, paddingHorizontal: 6 },
+  countCell: { width: '33.333%', alignItems: 'center', justifyContent: 'center', paddingVertical: 7, borderLeftWidth: 1, borderLeftColor: '#D4DFD3', gap: 3 },
+  lastCountCell: { borderLeftWidth: 0 },
+  countNumber: { color: '#176B62', fontSize: 22, fontWeight: '800' },
+  countLabel: { color: '#567169', fontSize: 12, fontWeight: '700' },
+  approvalNote: { borderTopWidth: 1, borderTopColor: '#DDE6DC', paddingTop: 12 },
+  approveButton: { minHeight: 56, marginTop: 2 },
+  savedBlock: { gap: 14 },
+  savedSection: { backgroundColor: '#FFFEFA', borderWidth: 1, borderColor: '#DFE7DE', borderRadius: 16, padding: 15, gap: 9 },
+  savedSectionHeading: { flexDirection: 'row-reverse', alignItems: 'center', gap: 9 },
+  savedCount: { color: '#176B62', fontSize: 14, fontWeight: '800', backgroundColor: '#E6F0E9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, overflow: 'hidden' },
+  savedEntry: { color: '#425E56', backgroundColor: '#F4F6F1', borderRadius: 10, padding: 11, fontSize: 14, lineHeight: 23, textAlign: 'right' },
 });
-
